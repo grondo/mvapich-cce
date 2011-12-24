@@ -1220,6 +1220,19 @@ smpi_finish (void)
     munmap(smpi.send_buf_pool_ptr, g_shmem_size_pool);
     close(smpi.fd_pool);
 
+    if (smpi_shmem->rqueues_params != NULL) {
+        free (smpi_shmem->rqueues_params);
+        smpi_shmem->rqueues_params = NULL;
+    }
+    if (smpi_shmem->rqueues_flow_out != NULL) {
+        free (smpi_shmem->rqueues_flow_out);
+        smpi_shmem->rqueues_flow_out = NULL;
+    }
+    if (smpi_shmem->rqueues_limits != NULL) {
+        free (smpi_shmem->rqueues_limits);
+        smpi_shmem->rqueues_limits = NULL;
+    }
+
     smpi_send_fifo_ptr = smpi.send_fifo_head;
     while (smpi_send_fifo_ptr) {
         free (smpi_send_fifo_ptr);

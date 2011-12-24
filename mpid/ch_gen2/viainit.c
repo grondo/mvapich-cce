@@ -998,6 +998,7 @@ int MPID_VIA_Init(int *argc, char ***argv, int *size, int *rank)
         ib_qp_enable();
     }
 
+    free(local_addr);
     free(alladdrs);
 
     if (viadev_async_progress) {
