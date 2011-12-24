@@ -1923,6 +1923,12 @@ void alarm_handler(int signal)
     }
 
     if(alarm_msg) fprintf(stderr, alarm_msg);
+
+    fprintf(stderr, "ERROR: Reached mpirun timeout.  Attempting to cleanup ob.\n"
+            "If this job is not an MPI application, you may want to run it\n"
+            "directly (without mpirun) or via \"srun --mpi=none\", if available.\n"
+    );
+
     cleanup();
 }
 
