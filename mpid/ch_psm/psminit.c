@@ -131,6 +131,55 @@ int vapi_proc_info(int i, char **host, char **exename)
 
 
 
+/* ensure that all procs have completed their call to psm_mq_init */
+static int psm_mq_init_barrier(psm_mq_t mq, int rank, int ranks, psm_epaddr_t* addrs)
+{
+    int tmp_rc;
+    int rc = PSM_OK;
+
+    /* implement barrier dissemination algorithm */
+    int dist = 1;
+    while (dist < ranks) {
+        /* compute rank of source for this phase */
+        int src = rank - dist;
+        if (src < 0) {
+            src += ranks;
+        }
+
+        /* compute rank of destination for this phase */
+        int dst = rank + dist;
+        if (dst >= ranks) {
+            dst -= ranks;
+        }
+
+        /* post non-blocking receive for message with tag equal to source rank plus one */
+        uint64_t rtag = (uint64_t) src + 1;
+        uint64_t rtagsel = 0xFFFFFFFFFFFFFFFF;
+        psm_mq_req_t request;
+        tmp_rc = psm_mq_irecv(mq, rtag, rtagsel, MQ_FLAGS_NONE, NULL, 0, NULL, &request);
+        if (tmp_rc != PSM_OK) {
+            rc = tmp_rc;
+        }
+
+        /* post blocking send to destination, set tag to be our rank plus one */
+        uint64_t stag = (uint64_t) rank + 1;
+        tmp_rc = psm_mq_send(mq, addrs[dst], MQ_FLAGS_NONE, stag, NULL, 0);
+        if (tmp_rc != PSM_OK) {
+            rc = tmp_rc;
+        }
+
+        /* wait on non-blocking receive to complete */
+        tmp_rc = psm_mq_wait(&request, NULL);
+        if (tmp_rc != PSM_OK) {
+            rc = tmp_rc;
+        }
+
+        /* increase our distance by a factor of two */
+        dist <<= 1;
+    }
+
+    return rc;
+}
 
 int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
 {
@@ -315,6 +364,11 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
                    &psmdev.mq)) != PSM_OK)
     {
         error_abort_all(GEN_EXIT_ERR, "Unable to initialize MQ: %s", psm_error_get_string(psm_ret));
+    }
+
+    /* execute barrier to ensure all tasks have returned from psm_ep_connect */
+    if ((psm_ret = psm_mq_init_barrier(psmdev.mq, psmdev.me, psmdev.np, psmdev.epaddrs)) != PSM_OK) {
+        error_abort_all(GEN_EXIT_ERR, "MQ barrier failed: %s", psm_error_get_string(psm_ret));
     }
 
     pmgr_close();
