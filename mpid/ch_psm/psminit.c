@@ -237,7 +237,7 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
 
      /* Set the two environment variables to enable more than 4 
         processes per node. This is done to resolve bug in InfiniPath 2.1 */
-    if(PSM_VERNO == 0x0105)
+    if(PSM_VERNO >= 0x0105)
     {
       for (j = 0; j < psmdev.np; j++) {
           if (allhostids[psmdev.me] == allhostids[j]) {
@@ -248,10 +248,10 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
           } 
       }
 
-      sprintf(temp_str, "MPI_LOCALNRANKS=%d", num_local_nodes);
-      putenv(temp_str);
-      sprintf(temp_str1, "MPI_LOCALRANKID=%d", my_local_id);
-      putenv(temp_str1);
+      snprintf(temp_str, sizeof(temp_str),"%d", num_local_nodes);
+      setenv("MPI_LOCALNRANKS", temp_str, 0);
+      snprintf(temp_str1, sizeof(temp_str1), "%d", my_local_id);
+      setenv("MPI_LOCALRANKID", temp_str1, 0);
     }
 
     free(allhostids);
