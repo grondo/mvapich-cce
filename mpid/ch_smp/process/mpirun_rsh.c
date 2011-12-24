@@ -115,9 +115,6 @@ int use_rsh = 0;
 int use_rsh = 1;
 #endif
 
-#define SH_NAME_LEN	(128)
-char sh_cmd[SH_NAME_LEN];
-
 static struct option option_table[] = {
     {"np", required_argument, 0, 0},
     {"debug", no_argument, 0, 0},

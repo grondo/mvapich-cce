@@ -648,12 +648,20 @@ int remote_host(char *rhost)
     return 1;
 }
 
+char *lookup_shell(void)
+{
+    char *shell = getenv("SHELL");
+
+    return strdup(shell ? shell : SH_CMD);
+}
+
 int start_process(int i, char *command_name, char *env)
 {
     char * remote_command = NULL;
     char * xterm_command = NULL;
     char * xterm_title = NULL;
     int use_sh = !remote_host(plist[i].hostname);
+    char * sh_cmd = lookup_shell();
     
     int id = getpid();
 
@@ -705,7 +713,7 @@ int start_process(int i, char *command_name, char *env)
             if (show_on) {
                 if (use_sh) {
                     printf("command: %s -T %s -e %s %s \"%s\"\n", XTERM,
-                           xterm_title, SH_CMD, SH_ARG,
+                           xterm_title, sh_cmd, SH_ARG,
                            xterm_command);
                 } else if (use_rsh) {
                     printf("command: %s -T %s -e %s %s %s\n", XTERM,
@@ -719,7 +727,7 @@ int start_process(int i, char *command_name, char *env)
             } else {
                 if (use_sh) {
                      execl(XTERM, XTERM, "-T", xterm_title, "-e",
-                          SH_CMD, SH_ARG, xterm_command, NULL);
+                          sh_cmd, SH_ARG, xterm_command, NULL);
                 } else if (use_rsh) {
                     execl(XTERM, XTERM, "-T", xterm_title, "-e",
                           RSH_CMD, plist[i].hostname, xterm_command, NULL);
@@ -732,7 +740,7 @@ int start_process(int i, char *command_name, char *env)
         } else {
             if (show_on) {
                 if (use_sh) {
-                    printf("command: %s %s \"%s\"\n", SH_CMD, SH_ARG,
+                    printf("command: %s %s \"%s\"\n", sh_cmd, SH_ARG,
                            remote_command);
                 } else if (use_rsh) {
                     printf("command: %s %s %s\n", RSH_CMD,
@@ -743,7 +751,7 @@ int start_process(int i, char *command_name, char *env)
                 }
             } else {
                 if (use_sh) {
-                    execl(SH_CMD, SH_CMD, SH_ARG,
+                    execl(sh_cmd, sh_cmd, SH_ARG,
                           remote_command, NULL);
                 } else if (use_rsh) {
                     execl(RSH_CMD, RSH_CMD, plist[i].hostname,
@@ -763,6 +771,7 @@ int start_process(int i, char *command_name, char *env)
     free(remote_command);
     free(xterm_command);
     free(xterm_title);
+    free(sh_cmd);
     return (0);
 }
 
