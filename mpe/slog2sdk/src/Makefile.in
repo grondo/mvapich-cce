@@ -1,0 +1,49 @@
+MAKE=@MAKE@
+RM=@RM@
+SHELL=/bin/sh
+
+TARGETS = base/io base/drawable base/statistics base/topology \
+          logformat/clog logformat/clogTOdrawable \
+          logformat/clog2 logformat/clog2TOdrawable \
+          logformat/trace logformat/slog2 \
+          viewer/common viewer/convertor viewer/legends \
+          viewer/zoomable viewer/histogram viewer/timelines viewer/first \
+          viewer/launcher
+
+#          viewer/swingextn viewer/timelines
+
+all:
+	@for dir in $(TARGETS) ; do \
+	    ( cd $$dir && $(MAKE) ) ; \
+	 done
+
+clean:
+	@for dir in $(TARGETS) ; do \
+	    ( cd $$dir && $(MAKE) clean ) ; \
+	 done
+
+rmlib:
+	@for dir in $(TARGETS) ; do \
+	    ( cd $$dir && $(MAKE) rmlib ) ; \
+	 done
+
+realclean:
+	@for dir in $(TARGETS) ; do \
+	    ( cd $$dir && $(MAKE) realclean ) ; \
+	 done
+
+distclean-misc:
+	@-$(RM) Makefile
+	@-$(RM) *.manifest
+	@-$(RM) config.log config.status
+	@-$(RM) -r autom4te*.cache
+
+distclean: distclean-misc
+	@-for dir in $(TARGETS) ; do \
+	     ( cd $$dir && $(MAKE) distclean ) ; \
+	  done
+
+maintainer-clean: distclean
+
+owner-clean: maintainer-clean
+	@-$(RM) configure

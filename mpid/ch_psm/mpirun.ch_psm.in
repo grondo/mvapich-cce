@@ -1,0 +1,93 @@
+#! /bin/sh
+#
+# This script gets included by the MPICH mpirun script
+# when MPICH is configured with the VIA device.
+# Currently the "use_mpd" command line flag is required
+# for use with MPD.
+#
+
+#######################################################################
+# Copyright (C) 1999-2001 The Regents of the University of California
+# (through E.O. Lawrence Berkeley National Laboratory), subject to
+# approval by the U.S. Department of Energy.
+#
+# Your use of this software is under license -- the license agreement is
+# attached and included in the MVICH top-level directory as LICENSE.TXT
+# or you may contact Berkeley Lab's Technology Transfer Department at
+# TTD@lbl.gov.
+#
+# NOTICE OF U.S. GOVERNMENT RIGHTS. The Software was developed under
+# funding from the U.S. Government which consequently retains certain
+# rights as follows: the U.S. Government has been granted for itself and
+# others acting on its behalf a paid-up, nonexclusive, irrevocable,
+# worldwide license in the Software to reproduce, prepare derivative
+# works, and perform publicly and display publicly. Beginning five (5)
+# years after the date permission to assert copyright is obtained from
+# the U.S. Department of Energy, and subject to any subsequent five (5)
+# year renewals, the U.S. Government is granted for itself and others
+# acting on its behalf a paid-up, nonexclusive, irrevocable, worldwide
+# license in the Software to reproduce, prepare derivative works,
+# distribute copies to the public, perform publicly and display
+# publicly, and to permit others to do so.
+#######################################################################
+
+default_install_machinefile=${prefix}/share/machines.${DEFAULT_ARCH}
+default_util_machinefile=${datadir}/machines.${DEFAULT_ARCH}
+
+if [ "0" = "1" ] ; then
+	echo "ARCH      = $arch"
+	echo "paramfile = $psm_paramfile"
+	echo "hostfile  = $psm_hostfile"
+	echo "hostlist  = $psm_hostlist"
+	echo "debug     = $psm_debug"
+	echo "totalview = $psm_tv"
+	echo "show      = $psm_show"
+	echo "xterm     = $psm_xterm"
+	echo "progname  = $progname"
+fi
+
+if [ "x$psm_usempd" != "x" ] ; then
+
+    psm_env=""
+    psm_args=" -np $np"
+    if [ "x$psm_paramfile" != "x" ] ; then
+       psm_env=`$MPIRUN_BIN/read_params.pl $psm_paramfile`
+       if [ -n "$psm_env" ] ; then
+           psm_env=" -MPDENV- $psm_env"
+       fi
+    fi
+
+    $Show ${prefix}/bin/mpdmpexec $psm_args $progname $cmdLineArgs $psm_env
+    exitstatus=$?
+else
+
+    psm_args="$psm_show $psm_xterm $psm_debug"
+    if [ "x$psm_paramfile" != "x" ] ; then
+       psm_args="$psm_args -paramfile $psm_paramfile"
+    fi
+    psm_args="$psm_args -np $np"
+    if [ "x$psm_hostfile" = "x" ]; then
+	psm_hostfile="$machineFile"
+    fi
+    if [ "x$psm_hostfile" = "x" ]; then
+       if [ "x$psm_hostlist" != "x" ]; then
+	   psm_args="$psm_args $psm_hostlist"
+       else
+	   if [ "x$PBS_NODEFILE" != "x" ]; then
+	       psm_args="$psm_args -hostfile $PBS_NODEFILE"
+	   elif [ -f "$default_install_machinefile" ]; then
+	       psm_args="$psm_args -hostfile $default_install_machinefile"
+	   elif [ -f "$default_util_machinefile" ]; then
+	       psm_args="$psm_args -hostfile $default_util_machinefile"
+           else
+		echo "Need to provide machinefile or a list of machines"
+		exitstatus=1
+	   fi
+       fi
+    else
+       psm_args="$psm_args -hostfile $psm_hostfile"
+    fi
+
+    $Show $MPIRUN_HOME/mpirun_rsh $psm_args $progname $cmdLineArgs 
+    exitstatus=$?
+fi

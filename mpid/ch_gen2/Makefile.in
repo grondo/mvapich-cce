@@ -1,0 +1,224 @@
+ARCH        = @ARCH@
+DEVICE      = @DEVICE@
+MPIR_HOME   = @MPIR_HOME@
+CC          = @CC@
+AR          = @AR@
+RANLIB      = @RANLIB@
+OPTFLAGS    = 
+SHELL       = /bin/sh
+MAKE        = @MAKE@
+ASMFILES_O  = 
+
+prefix      = @prefix@
+top_srcdir  = @top_srcdir@
+# srcdir is mpid/device
+srcdir      = @srcdir@
+libbuild_dir = @libbuild_dir@
+DEFS        = @DEFS@ -I. -I${srcdir} @mpich_includes@ \
+		-DMPID_DEVICE_CODE @GETNAME_DEFS@ @DEVCFLAGS@ @DEV_DEFS@
+
+LDFLAGSBASE = @LDFLAGS@
+BASE_LIB_LIST = @BASE_LIB_LIST@
+
+IBMGRP = 
+
+@VPATH@
+
+ALL: default
+
+LIBNAME  = ${libbuild_dir}/lib@MPILIBNAME@.a
+
+#
+# NOTE: would like to have both -Wredundant-decls AND -Werror
+#       specified here, but including malloc.h to call mallopt
+#       causes malloc, free, etc to be re-declared.  This is a
+#       glibc bug.  For now, do not use -Wredundant-decls on
+#       modules that include malloc.h (viainit.c).
+#
+
+ifeq ($(CC),gcc)
+	CFLAGS1 = @CFLAGS@ -D_GNU_SOURCE -I${top_srcdir} -I${srcdir} -I. $(OPTFLAGS) 
+		
+else
+	CFLAGS1   = -D_GNU_SOURCE @CFLAGS@ -I${top_srcdir} -I${srcdir} -I. $(OPTFLAGS)
+endif
+
+ifeq ($(CC),pgcc)
+    CFLAGS1 = @CFLAGS@ -D_GNU_SOURCE -DDISABLE_RMB -I${top_srcdir} -I${srcdir} -I. $(OPTFLAGS)
+endif				  
+
+CFLAGS = $(CFLAGS1)
+
+# -Wcast-align doesn't work on alpha
+
+HEADERS  = comm.h cookie.h datatype.h mpid.h mpid_bind.h mpid_time.h  \
+	   mpiddev.h queue.h req.h reqalloc.h sbcnst2.h  cm_user.h\
+	   vbuf.h viapacket.h viapriv.h viutil.h viaparam.h cm.h\
+	   attach.h mpid_smpi.h collutils.h bcast_info.h avl.h avl_types.h\
+           coll_shmem.h async_progress.h nfr.h
+
+MPICHSOURCE = queue.c sbcnst2.c tr2.c sbcnst2.h tr2.h
+MPICHOBJECTS = queue.o sbcnst2.o tr2.o
+
+VIASOURCE   =  viainit.c viasend.c viarecv.c viacheck.c \
+	   viapriv.c viaparam.c viutil.c vbuf.c \
+	   mpid_init.c mpid_recv.c mpid_send.c cm_user.c\
+	   mpid_hsend.c mpid_hrecv.c mpid_pack.c cm.c\
+	   cmnargs.c mpid_misc.c dreg.c mpid_smpi.c \
+	   collutils.c intra_rdma_barrier.c \
+       mpid_mcast.c mcst_grp.c ibmcgrp.c \
+	   crc32h.c avl.c mem_hooks.c viacoalesce.c shmem_coll.c\
+           async_progress.c  calltrace.c objtrace.c nfr.c
+
+VIAOBJECTS  = viainit.o viasend.o viarecv.o viacheck.o \
+	   viapriv.o viaparam.o viutil.o vbuf.o cm_user.o\
+	   mpid_init.o mpid_send.o mpid_recv.o cm.o\
+	   mpid_hsend.o mpid_hrecv.o mpid_pack.o cmnargs.o \
+	   mpid_misc.o dreg.o mpid_smpi.o collutils.o intra_rdma_barrier.o \
+       mpid_mcast.o mcst_grp.o ibmcgrp.o crc32h.o avl.o \
+	   mem_hooks.o viacoalesce.o shmem_coll.o async_progress.o calltrace.o \
+	   objtrace.o nfr.o
+           
+
+# default_all is the target used by the MPICH build. It can be optimized
+# to not to the ranlib that default does. Is this necessary on modern machines?
+
+MPIRUN_CFLAGS += -DVAPI @CC_SHARED_OPT@
+
+MPIRUN = mpirun_rsh     
+
+ifeq "$(findstring -D_SMP_,$(CFLAGS1))" "-D_SMP_"
+        MPIRUN_CFLAGS += -D_SMP_
+endif
+
+ifeq "$(findstring -D_IA64_,$(CFLAGS1))" "-D_IA64_"
+        MPIRUN_CFLAGS += -D_IA64_
+endif
+
+ifeq "$(findstring -DUSE_RSH,$(CFLAGS1))" ""
+        MPIRUN_CFLAGS += -DUSE_SSH
+else
+        MPIRUN_CFLAGS += -DUSE_RSH
+endif
+
+ifeq "$(findstring -DMCST_SUPPORT,$(CFLAGS1))" "-DMCST_SUPPORT"
+        MPIRUN_CFLAGS += -DMCST_SUPPORT
+	IBMGRP = ibmcgrp
+endif
+
+ifeq "$(findstring -DDISABLE_PTMALLOC,$(CFLAGS1))" "-DDISABLE_PTMALLOC"
+	PTMALLOC = 
+else
+	PTMALLOC = ptmalloc2
+endif
+
+
+
+default_all: default
+
+default: setlinks lib $(MPIRUN) $(IBMGRP) $(PTMALLOC)
+
+lib: $(VIAOBJECTS) $(MPICHOBJECTS) 
+	$(AR) $(LIBNAME) $?
+
+.EXPORT_ALL_VARIABLES:
+
+mpirun_rsh:
+	cd process && $(MAKE) &&\
+	  install -m 755 mpirun_rsh mpispawn minidaemon_client ${top_srcdir}/bin
+
+ibmcgrp: ibmcgrp/ibmcgrp.o ibmcgrp/main.o
+	$(CC) $(CFLAGS) -c -o ibmcgrp/main.o ibmcgrp/main.c
+	$(CC) $(CFLAGS) -c -o ibmcgrp/ibmcgrp.o ibmcgrp/ibmcgrp.c
+	$(CC) -o ibmcgrp/ibmcgrp ibmcgrp/main.o ibmcgrp/ibmcgrp.o $(BASE_LIB_LIST) $(LDFLAGSBASE)
+	install -m 755 ibmcgrp/ibmcgrp ${top_srcdir}/bin
+
+ptmalloc2: malloc.o
+	$(AR) $(LIBNAME) malloc.o
+
+malloc.o:
+	${CC} -fPIC -c @CFLAGS@ -D_GNU_SOURCE=1 -O2 -DUSE_TSD_DATA_HACK \
+	-Iptmalloc2/sysdeps/pthread -Iptmalloc2/sysdeps/generic -I. \
+	-DTHREAD_STATS=1  ptmalloc2/malloc.c
+
+	
+
+$(MPICHSOURCE): setlinks
+
+#
+# files written from scratch or significantly modified for the via device (MVICH)
+#
+
+VIAFILES = viainit.c viasend.c viarecv.c viapriv.c viaparam.c viutil.c vbuf.c \
+	   mpid_init.c mpid_send.c mpid_recv.c viacheck.c mpid_pack.c \
+	   process/pmgr_client_fork.c process/minidaemon.c process/pmgr_client_mpirun_rsh.c \
+	   process/common_pmgr_collective.c process/client_pmgr_collective.c \
+	   process/mpirun_rsh.c process/mpispawn.c mpid_hsend.c mpid_hrecv.c \
+           req.h vbuf.h viapacket.h viapriv.h viutil.h process/mpispawn.h \
+	   process/pmgr_client.h process/minidaemon.h mpid_misc.c viaparam.h  viaconfig.h viadev.h \
+	   process/common_pmgr_collective.h process/client_pmgr_collective.h \
+	   cmnargs.c dreg.h mpid.h  mpid_smpi.h mpid_smpi.c \
+	   process/mpirun_util.c calltrace.c nr.c
+
+#
+# Files from the original ADI that we need, but didn't change, 
+# or didn't change significantly. 
+# In most cases, the ADI implementation doesn't use these directly, 
+# but there is some indirect dependency in the main MPI code. 
+#
+
+OTHERFILES = cookie.h mpimem.h calltrace.h datatype.h objtrace.h cmnargs.h \
+	mpid_time.h comm.h attach.h mpiddev.h  reqalloc.h mpid_bind.h
+
+wc: 
+	wc -l $(VIAFILES)
+
+ls:
+	ls -l $(VIAFILES) $(OTHERFILES)
+
+print: 
+	enscript $(VIAFILES)
+
+clean: 
+	/bin/rm -f *.o *.d *~ $(VIAOBJECTS) \
+	    $(MPICHOBJECTS) $(MPICHSOURCE) core ibmcgrp/*.o ibmcgrp/ibmcgrp \
+	    ${top_srcdir}/bin/ibmcgrp
+	$(MAKE) -C process clean
+	-@(cd ../mpd; \
+	if [ $(MPIRUN) != mpirun_mpd ] ; then rm -rf ch_gen2.mpd ; fi ; \
+	if [ -f Makefile ] ; then $(MAKE) clean ; fi)
+
+viainit.o: viainit.c
+	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c viainit.c ${MPI_PROFILE}
+
+.c.o: $(HEADERS)
+	${CC} ${DEFS} ${CFLAGS} ${BASEOPT} -c $< ${MPI_PROFILE}
+
+
+$(LIBNAME): $(OBJECTS) $(VIAOBJECTS)
+	$(AR) $@ $?
+	$(RANLIB) $@
+
+setlinks: 
+	for file in $(MPICHSOURCE) ; do  \
+	    if [ ! -s $$file ] ; then   \
+	       ln -s ../util/$$file;    \
+	    fi;                         \
+	done
+
+#
+# diffs "unchanged" files against the mpich originals
+#
+
+diff:
+	for file in $(OTHERFILES) ; do     \
+	    echo comparing $$file;         \
+	    if [ -f ../ch2/$$file ] ; then \
+	      diff $$file ../ch2/$$file;   \
+	    elif [ -f ../util/$$file ] ; then \
+	      diff $$file ../util/$$file;  \
+	    else                           \
+	      echo cant find file $$file;  \
+	    fi                             \
+	done
+

@@ -1,0 +1,490 @@
+MVAPICH Changelog
+-----------------
+
+This file briefly describes the latest changes to MVAPICH software package. The
+logs are arranged in the "most recent first" order.
+
+
+01/28/2010
+* Merge in changes to include `Network Fault Resiliency' support,
+  jointly with Pavel Shamis <pasha@mellanox.co.il>
+
+01/12/2010
+* Fix for Hybrid-XRC failures where SMP was disabled
+
+12/16/2009
+* Added support for RDMAoE
+
+12/08/2009
+* Changing the mvapich.conf file to indicate that AFFINITY should be on by
+default.
+
+12/04/2009
+* Patches contributed by Adam Moody @ LLNL
+  * No RSH/SSH for localhost
+  * Use user shell instead of bash
+  * Turn off registration cache if ptmalloc is turned off
+  * Enable Totalview with -tv
+  * Enhancement to mpirun to check path for application (in addition to current directory)
+  * mpirun timeout more descriptive in case serial jobs are launched through mpirun_rsh
+* Suggested by Christian Guggenberger <christian.guggenberger@rzg.mpg.de>
+  * Default hostfile in ~/.mpirun_hostfile also controlled by env MPIRUN_HOSTFILE
+
+11/16/2009
+* Fixing RDMA Get failure with compilation and other tests.
+
+08/17/2009
+* Fix issues with p_key handling
+
+06/29/2009
+* Update legacy c++ to be more conforming
+* Use the c++ header file iostream and take namespaces into account.
+
+06/09/2009
+* Make sure that we keep track of R3 packets in our ACK counter
+* Fixes an OOM error with OSU bw when R3 is used
+
+05/18/2009
+* De-register stale memory regions earlier to prevent 
+excess allocations of physical memory
+
+05/14/2009
+* Add error handling patches in connection management.
+
+03/13/2009
+* Unify the return values of MPID_SHMEM_BCAST_init for all the devices.
+
+03/10/2009
+* Close shared memory files properly in finalize.
+
+11/12/2008
+* Correct issue when activating XRC connections that are shared.
+
+11/04/2008
+* Increase the number of allowed nodes for shared memory broadcast to 4K.
+
+10/30/2008
+* Increasing the threshold at which we switch from Recursive Doubling to Ring
+  algorithm for Allgather collective.
+
+10/29/2008
+* Ignore the last bit of the pkey 
+* Remove the pkey_ix option since the index 
+  can be different on different machines
+* Processes can be separated by ":" for cpu mapping to be consistent with
+  mvapich2. Processes can also be separated by "," for backward compatibility.
+
+10/25/2008
+* Diskless shared memory files.
+
+10/20/2008
+* Enhanced TotalView support.
+
+10/09/2008
+* Implement MPI_Query_thread and MPI_Is_thread_main.
+
+10/08/2008
+* Fix a bug in allreduce. Do not call the user-defined function with 0 length.
+
+10/05/2008
+* Move XRC finalization until after SRQs are destroyed.
+  Thanks to Pasha at Mellanox (OpenFabrics: #1244).
+
+09/27/2008
+* Redirect stdin of non-root mpi procs to /dev/null.
+
+09/24/2008
+* Remove warning flags since PGI cannot handle them.
+
+09/22/2008
+* Fix data types for memory allocations. Thanks for Dr. Bill Barth from TACC for
+  the patches.
+* Remove RDMA collectives.  These have been replaced with shared memory
+  collectivies.
+
+09/19/2008
+* Remove an unnecessary check for handling non-contiguous datatype using
+  MPI_BOTTOM.
+
+09/15/2008
+* Define PATH_MAX if not defined by the host platform.  Thanks to Pasha @
+  Mellanox.
+
+09/07/2008
+* Change the name of the environment variable from MV_SHMEM_BCAST_LEADERS to
+  VIADEV_SHMEM_BCAST_LEADERS.
+
+09/05/2008
+* Convert "SHMEM_BCAST_LEADERS" macro to an environment variable.
+
+09/04/2008
+* Prevent possible compilation error for using a function before it is declared.
+
+09/02/2008
+* Cleaner error handling for mpirun framework.                                    
+
+08/27/2008
+* Fix the intra-node bw drop caused by async progress changes.
+
+08/24/2008
+* Add support for ConnectX QDR.
+
+08/17/2008
+* Re-enable multi-port and multi-hca functionality. We now do not determine what
+  HCA to use before doing the host id exchange that allows us to determine what
+  processes are on each node.
+* Removing assert and adding a missed revertSignal() call.
+
+08/08/2008
+* Remove the udapl device. Users should use MVAPICH2 for udapl
+  support.
+
+08/07/2008
+* HEAP_MAX_SIZE must be larger than the MMAP_DEFAULT_THRESHOLD, or realloc
+  operations can fail when there is another thread performing a malloc
+  operation.
+
+08/05/2008
+* Instead of trying to deregister entries from within the malloc/free hooks,
+  just queue it to be done when the next entry into the dreg cache is made. This
+  prevents a deadlock condition from being able to occur.
+
+07/29/2008
+* Increase size of 'lrank' to allow larger numbers of ranks.
+* Add disable signal to other relevant files. MPI_Start was hanging since it
+  indireclty calls MPID_send functions.
+
+07/28/2008
+* MPI_Type_free should also disable signals as it calls memory functions. This
+  problem surfaces in NAS-btio tests (hangs).
+* Fix hang in intel send fairness test.
+
+07/25/2008
+* Remove references to MVAPICH2 and MPICH2 macros.
+
+07/24/2008
+* Add eXtended Reliable Connection (XRC) support.
+
+07/22/2008
+* Disable interrupt of async thread when already inside mpi library. Intel
+  MPI_Issend_ator test hangs otherwise.
+
+07/14/2008
+* Add schedule policy as runtime parameter. The default linux schedule is set as
+  the default. Use VIADEV_ASYNC_SCHEDULE=RR for the best performance. The other
+  options are FIFO and DEFAULT.
+
+06/30/2008
+* Do not try to use shmem broadcast if shmem_bcast shared memory initialization
+  fails.
+
+06/25/2008
+Fix Solaris connect bug with mpirun_rsh.
+
+06/20/2008
+* We no longer support MPD for MVAPICH (stopped last release actually).
+
+06/19/2008
+* Remove VAPI device.  This device is now deprecated.
+* Remove ch_gen2_ud device. The ch_hybrid device is a functional superset of
+  ch_gen2_ud and can be configured in a "ud-only" mode via a run-time option.
+
+06/11/2008
+* Clean exit for mpirun_rsh when executable is not specified.
+
+06/10/2008
+* Add aggregate patch, v2 to the Lustre ADIO driver.
+
+05/11/2008
+* Changed "inline" functions to "static inline" to enable Sun Studio 12
+  compiler.
+
+05/04/2008
+* Update configure to avoid silently falling back to gcc if chosen compiler
+  doesn't function properly.
+
+  Contributed by Pavel Shamis (Mellanox)
+
+05/02/2008
+* Fix race condition in on-demand startup that 
+  John Hawkes from Penguin Computing pointed out
+  where viadev.connections could be used before being
+  allocated
+
+03/31/2008
+* Additional cleanup of processes on MPI_Abort
+* Check for mpispawn in the same directory as mpirun_rsh
+
+03/09/2008
+* Fix for the BLACS segmentation fault problem. Problem occurs when application
+  holds onto MPI communicators not freeing immediately.
+
+  Thanks to Byoung-Do Kim (TACC) for pointing this out.
+
+02/22/2008
+* Fixed compilation errors when _SMP_ is not defined.
+* When using ASYNC is used, protect Iprobe with the proper locks
+
+02/18/2008
+* Fix bug that would cause mpirun_rsh to fail when reading in a parameter file.
+
+* Do not use APM for QP errors
+* Port errors do not require abort 
+  Contributed by Pavel Shamis (Mellanox)
+
+02/15/2008
+* Improve ASYNC performance when running fully-subscribed by
+  reducing the number of interrupts before requesting notification
+* Defer cancellation of the async events thread until it is safe
+
+02/14/2008
+* Various C99 to C98 syntax changes.
+
+02/11/2008
+* Remove unnecessary redefinitions of network byte order functions.  Leaving
+  these definitions in are known to cause builds on IA64 machines with RHEL 5.1
+  to fail.
+
+02/08/2008
+* Remove support for MPD from Gen2-UD, PSM, and SMP
+
+02/07/2008
+* Added support for shared memory broadcast to the psm device.
+* Improved startup for Gen2-UD, PSM, and SMP
+
+02/06/2008
+* Cleared the flags for initializing MPI_COMM_WORLD.
+  Contributed by Pavel Shamis (Mellanox)
+
+02/04/2008
+* Totalview support added to mpirun.
+
+  Contributed by Adam Moody (LLNL)
+
+* Integration of PMGR Collectives for mpirun_rsh.  This greatly lowers the time
+  needed to bootstrap MPI and is already supported by SLURM.
+
+  Contributed by Adam Moody (LLNL)
+
+* Enhanced startup mechanism with mpispawn to increase performance
+* PMGR_COLLECTIVES over the mpispawn tree
+
+* Do not do credit check for SRQ in the R3 Path
+  (Thanks to Pasha at Mellanox)
+
+* Gen2-UD Device added (support for using the UD transport for 
+  all communication)
+
+02/01/2008
+* New Allgather obtained from TACC experience when processes are
+  distributed in block fashion.
+
+* SGI changes for multiple communicators and shared memory collectives to use
+  optimized algorithm instead of falling back to default.
+
+* ASYNC compile flag required for asynchronous progress
+
+02/01/2008
+* Add Lustre ADIO driver. This is a contribution from Future Technologies Group, Oak Ridge National Laboratory.
+
+01/25/2008
+* Dynamic SRQ Fill-Resize: resize SRQ on limit event. Should decrease the
+  need for tuning based on application and size.
+
+  VIADEV_SRQ_MAX_SIZE=<maximum allocated size - default 4096>
+  VIADEV_SRQ_SIZE-<intial fill - default 64>
+
+01/24/2008
+* Enabled user specified cpu binding.
+
+10/29/2007
+* Added the typo patch provided by pat latifi@qlogic
+
+06/13/2007
+
+* Added PSM device
+* Added hot-spot avoidance feature in multi-rail
+
+06/06/2007
+
+* Catching errors early with multi-rail device 
+  
+  Contributed by Ishai (Mellanox)
+
+04/25/2007
+
+* Made shared memory macros tunable at run time
+
+04/24/2007
+
+* Applied patch from Chris Chambreau @ LLNL to correct
+  MPI_Pack error checking
+
+04/17/2007
+
+* Support for mpirun with multi-rail device
+
+  Thanks to Egor Tur for pointing this out
+
+04/12/2007
+
+* Applied patch for tuned coll table. 
+
+  Contributed by Shalnov, Sergey and Mishura, Dmitri (Intel)
+
+04/02/2007
+
+* Applied the patch for finalization
+
+  Contributed by Pavel Shamis (Mellanox)
+
+03/21/2007
+
+* Specify the inline size of a QP to -1 only if it is an IBM EHCA. Other
+  Adapters may support inline data transfer.
+
+  Contributed by Xalex (Mellanox).
+
+02/21/2007
+
+* Simplify the way hostnames are specified for smp device 
+
+  Contributed by Adam Moody (LLNL).
+
+02/15/2007
+
+* Applied the patches for the memory leaks in shared memory collectives
+
+  Contributed by Adam Moody (LLNL).
+
+01/25/2007
+
+* Bug fix for NULL argc, argv
+
+  Contributed by Adam Moody (LLNL).
+
+01/11/2007
+
+* Bug fix with ICC (9.0+) compiler on IA64 platform
+
+  Contributed by Sylvain Jeaugey, Bull.
+
+12/23/2006
+
+* Bug fix with the shared library generations, with --enable-sharedlib 
+  flag only  the static version of libpmpich is build
+
+  Contributed by Sara, Netherlands
+
+12/23/2006
+
+* Bug fix to make an array used in RDMA Allgather dynamic
+  with the number of dimensions (log(p)).
+  
+  Suggested by Adam Moody (LLNL) and Voltaire.
+
+11/22/2006
+
+* Bug fix to set correct credit field, when using header caching.
+
+  Suggested by Adam Moody at LLNL.
+
+07/28/2006
+
+* Bug fix for SMP to return correct error code MPI_ERR_TRUNCATE
+  when messages larger than posted receive buffer is matched.
+
+  Suggested by Adam Moody at LLNL.
+
+07/14/2006
+
+* Runtime tunable algorithm thresholds for Alltoall
+* Passing LD_LIBRARY_PATH from master process to
+  all spawned processes launched by mpirun_rsh
+
+  Based on patches from Pavel Shamis of Mellanox Systems
+
+06/16/2006
+
+* Add ACL support to registration cache in order to avoid the
+  requirement of "write permissions" on rendezvous send buffers
+* Remove compile time limit of maximum number of SMP processes
+* Fix for credit resetting problem in header caching code
+* Bump up some socket parameters to allow MPD based startup on
+  several thousand nodes
+
+  Suggested by Srikant Sadasivam and Venkata Subramonyam of Cisco Systems
+
+06/15/2006
+
+* Bugfix for Datatype receive
+* Revert to rendezvous protocol for short messages when using SRQ if there
+  are queued sends in eager channel.
+* Shared library patch for enabling support on Solaris
+* Fix for PSP create in uDAPL
+
+05/05/2006
+
+* Autodetection script to identify specific HCA types and
+  choose the best set of parameters (for Gen2)
+
+05/04/2006
+
+* Mem-to-mem reliable data transfer
+  - detection of I/O bus error with 32 bit CRC
+  - retransmission of the message if error gets detected
+
+
+04/14/2006
+
+* Added optmized scheduling policies to ch_gen2_multirail device, round robin,
+  process binding, use only one etc.
+
+04/14/2006
+
+* Minor modification to ch_gen2/mpirun.lst to enable use of
+  default mpirun in addition to mpirun_rsh
+
+04/09/2006
+
+* Optimization to use R3 for short rendezvous packets instead of 
+  registration/de-registration.
+
+* Improved error message output when `gethostbyname' fails.
+
+* Removed some unused variables.
+
+* Set proper status count when sending to self
+
+* Thanks to Todd Rimmer from Silverstorm for pointing these issues.
+
+
+04/07/2006
+
+* Minor change to move a declaration above a function call
+
+* Suggested by Todd Rimmer (Silverstorm)
+
+04/05/2006
+
+* Adding AVL Tree based Registration Cache to ch_gen2_multirail device
+
+04/04/2006
+
+* Removed a patch which was causing problems with mpiexec. Please refer to
+  the discssion thread below for details:
+
+  http://mail.cse.ohio-state.edu/pipermail/mvapich-discuss/2006-March/000050.html
+
+* Thanks to the Trinity Centre for High Performance Computing for bringing it
+  to our attention.
+
+03/23/2006
+
+* Fixing a corner case for VIADEV_DEFAULT_PORT in the ch_gen2_multirail device
+
+03/16/2006
+
+* Adding Read Memory Barrier for PPC in the ch_gen2_multirail device for RDMA
+  FAST PATH and RDMA Collectives. Thanks to Brad Benton from IBM for pointing this
+  out.  

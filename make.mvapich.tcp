@@ -1,0 +1,58 @@
+#!/bin/bash
+
+die ()
+{
+    echo -n "Failure in "
+    echo $1
+    echo "Please file an error report to mvapich-discuss@cse.ohio-state.edu with all your log files." 
+    exit 1
+}
+
+export PREFIX="/usr/local/mvapich"
+
+export CC=gcc
+export CXX=g++
+export F77=g77
+export F90=$F77
+export CFLAGS="-O2"
+
+# To use Sun Studio compilers on Solaris, please uncomment the lines below
+# To build shared library, you also need to add -KPIC to the compiler options
+#export SUNP=/opt/SUNWspro/bin
+#export CC="$SUNP/cc -xO3 -xtarget=opteron -xarch=amd64"
+#export CXX="$SUNP/CC -xO3 -xtarget=opteron -xarch=amd64"
+#export F77="$SUNP/f77 -xO3 -xtarget=opteron -xarch=amd64"
+#export F90="$SUNP/f90 -xO3 -xtarget=opteron -xarch=amd64"
+#export LDFLAG="-xtarget=opteron -xarch=amd64"
+#export LD_LIBRARY_PATH=/usr/ucblib/amd64:/usr/lib/amd64:$LD_LIBRARY_PATH
+
+# Prelogue
+make distclean &>/dev/null
+set -o pipefail
+
+# Configure MVAPICH2
+echo "Start Configuring MVAPICH over TCP..."
+rm -f config-mine.log
+./configure  --prefix=$PREFIX --without-mpe  
+
+ret=$?
+tail config-mine.log
+test $ret = 0 ||  die Configuration
+
+# Build MVAPICH2
+echo "Start Building MVAPICH over TCP..."
+rm -f make-mine.log
+make | tee make-mine.log 
+ret=$?
+test $ret = 0 ||  die "Building MVAPICH"
+
+# Install MVAPICH2
+echo "Start MVAPICH installation..."
+rm -f install-mine.log 
+make install | tee install-mine.log
+ret=$?
+test $ret = 0 ||  die "Installing MVAPICH"
+
+# Epilogue
+echo "Congratulations on successfully building MVAPICH. Please send your feedback to mvapich-discuss@cse.ohio-state.edu." 
+exit 0

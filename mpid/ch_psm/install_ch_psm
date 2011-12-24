@@ -1,0 +1,57 @@
+#! /bin/sh
+
+#Copyright (c) 2002-2007, The Ohio State University. All rights
+#reserved.
+
+#This file is part of the MVAPICH software package, developed by the
+#team members of The Ohio State University's Network-Based Computing
+#Laboratory (NBCL) and headed by Professor Dhabaleswar K. (DK) Panda.
+
+#For detailed copyright and licencing information, please refer to the
+#copright file COPYRIGHT_MVAPICH in the top level MPICH directory.
+
+#
+# Install script for vapi (mpd) device
+# This script is called by mpiinstall to install the device.
+# It should add commands to the file named by UNINSTALLFILE to remove
+# any file that it adds.  It creates the mpichboot and mpichstop scripts
+#
+
+
+if [ -z "$MAKE" -o -z "$XMODE" ] ; then
+    echo "This script must be invoked from mpiinstall"
+    exit 1
+fi
+
+# Install MPD in the presence of mpd/Makefile and a dummy link vapi.mpd 
+if [ -L mpid/mpd/ch_psm.mpd -a -f mpid/mpd/Makefile ] ; then
+    export XMODE
+    cp ${bindir}/mpirun ${bindir}/mpirun.save
+    (cd mpid/mpd ; $MAKE install UNINSTALLFILE=$UNINSTALLFILE )
+    mv ${bindir}/mpirun ${bindir}/mpirun_mpd
+    mv ${bindir}/mpirun.save ${bindir}/mpirun
+    rm -f ${bindir}/mpichboot
+    cat >${bindir}/mpichboot <<EOF
+#! /bin/sh
+if [ ! -s $HOME/.mpdpasswd -a ! -s $HOME/.mpd.conf ] ; then
+    echo "In mpichboot:"
+    echo "A .mpd.conf file is required before starting an mpd demon."
+    echo "See the documentation on mpd in the User Manual."
+    exit 1
+fi
+# Use the -b option to force mpd into the background, orphaned from the 
+# calling process.  
+${bindir}/mpd -b &
+EOF
+    chmod $XMODE ${bindir}/mpichboot
+    echo "rm -f ${bindir}/mpichboot" >>$UNINSTALLFILE
+    rm -f ${bindir}/mpichstop
+    cat >${bindir}/mpichstop <<EOF
+#! /bin/sh
+${bindir}/mpdallexit
+EOF
+    chmod $XMODE ${bindir}/mpichstop
+    echo "rm -f ${bindir}/mpichstop" >>$UNINSTALLFILE
+else
+    echo "MPD is not installed since you opt not to have it."
+fi

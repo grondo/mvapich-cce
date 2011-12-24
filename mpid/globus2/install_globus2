@@ -1,0 +1,48 @@
+#! /bin/sh
+#
+# Globus2 device installation
+#
+
+#
+# get Globus2 configuration information
+#
+. mpid/$DEVICE/mpich-globus2-settings
+
+#
+# Copy device specific compiler scripts
+#
+for compiler in cc CC cxx f77 f90 ; do
+    if test -f ${binbuild_dir}/mpich-globus2-$compiler ; then
+        CopyFile ${binbuild_dir}/mpich-globus2-$compiler ${bindir} $XMODE
+    fi
+done
+
+#
+# Copy device specific header files
+#
+if test $VMPI -ne 0 ; then
+    CopyFile ${top_srcdir}/mpid/$DEVICE/mpid_defs.h ${includedir}
+    CopyFile ${top_srcdir}/mpid/$DEVICE/global_c_symb.h ${includedir}
+    CopyFile ${top_srcdir}/mpid/$DEVICE/global_fort_symb.h ${includedir}
+fi
+CopyFile ${includebuild_dir}/mpid_fortdefs.h ${includedir}
+
+#
+# Correct paths in mpich compiler scripts
+#
+for file in ${bindir}/mpicc ${bindir}/mpiCC ${bindir}/mpicxx ${bindir}/mpif77 \
+    ${bindir}/mpif90 ${sysconfdir}/mpicc.conf ${sysconfdir}/mpiCC.conf \
+    ${sysconfdir}/mpicxx.conf ${sysconfdir}/mpif77.conf \
+    ${sysconfdir}/mpif90.conf ${bindir}/mpireconfig ${bindir}/mpireconfig.dat \
+    ${bindir}/mpirun
+do
+    if test -f ${file} ; then
+        mv -f ${file} ${file}.tmp.$$
+        sed -e '/^[ 	]*binbuild_dir[ 	]*=/!'" s!${binbuild_dir}!${bindir}!g" \
+           ${file}.tmp.$$ >${file} 
+	if test -x ${file}.tmp.$$ ; then
+	    chmod $XMODE ${file}
+	fi
+        rm /${file}.tmp.$$
+    fi
+done

@@ -1,0 +1,139 @@
+/* mpi_fortconf.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Sizeof standard Fortran types */
+#undef SIZEOF_F77_DOUBLE_PRECISION
+#undef SIZEOF_F77_INTEGER
+#undef SIZEOF_F77_INTEGER_4
+#undef SIZEOF_F77_REAL
+/* Define if MPI_xxx_f2c and c2f routines defined */
+#undef HAVE_MPI_F2C
+/* Define if Fortran functions pointers are pointers to pointers */
+#undef FORTRAN_SPECIAL_FUNCTION_PTR
+
+/* Define if Fortran character variable support requires this (Cray) */
+#undef _TWO_WORD_FCD
+
+#undef HAS_MPIR_ERR_SETMSG
+
+#undef BUILDING_IN_MPICH
+
+#undef F77_TRUE_VALUE_SET
+#undef F77_TRUE_VALUE
+#undef F77_FALSE_VALUE
+
+#undef HAVE_WEAK_SYMBOLS
+
+#undef USE_STDARG
+
+#undef USE_OLDSTYLE_STDARG
+
+/* Define if MPI_Fint is the same as a C int */
+#undef FINT_IS_INT
+
+#undef USE_POINTER_FOR_BOTTOM
+
+/* The number of bytes in a char.  */
+#undef SIZEOF_CHAR
+
+/* The number of bytes in a double.  */
+#undef SIZEOF_DOUBLE
+
+/* The number of bytes in a float.  */
+#undef SIZEOF_FLOAT
+
+/* The number of bytes in a int.  */
+#undef SIZEOF_INT
+
+/* The number of bytes in a long.  */
+#undef SIZEOF_LONG
+
+/* The number of bytes in a long double.  */
+#undef SIZEOF_LONG_DOUBLE
+
+/* The number of bytes in a long long.  */
+#undef SIZEOF_LONG_LONG
+
+/* The number of bytes in a short.  */
+#undef SIZEOF_SHORT
+
+/* The number of bytes in a void*.  */
+#undef SIZEOF_VOIDP
+
+/* Define if you have the <stdlib.h> header file.  */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
+/* Define if you have the mpi library (-lmpi).  */
+#undef HAVE_LIBMPI
+
+/* Define if C compiler supports long long type */
+#undef HAVE_LONG_LONG
+
+/* Define if C compiler supports long double type */
+#undef HAVE_LONG_DOUBLE
+
+/* Define if MPI has F2C */
+#undef HAVE_MPI_F2C
+
+/* Define if long long allowed */
+#undef HAVE_LONG_LONG
+
+/* Define if Fortran names are lowercase */
+#undef F77_NAME_LOWER
+
+/* Define if Fortran names are lowercase with a trailing underscore */
+#undef F77_NAME_LOWER_USCORE
+
+/* Define if Fortran names containing an underscore have two trailing underscores */
+#undef F77_NAME_LOWER_2USCORE
+
+/* Define if Fortran names are uppercase */
+#undef F77_NAME_UPPER
+
+/* Define if Fortran names preserve the original case */
+#undef F77_NAME_MIXED
+
+/* Define if Fortran names preserve the original case and add a trailing underscore */
+#undef F77_NAME_MIXED_USCORE
+
+/* Define if Fortran names are uppercase */
+#undef F77_NAME_UPPER
+
+/* Define calling convention */
+#undef STDCALL
+
+/* Define calling convention */
+#undef STDCALL
+
+/* Define size of SIZEOF_F77_INTEGER */
+#undef SIZEOF_F77_INTEGER
+
+/* Define size of SIZEOF_F77_REAL */
+#undef SIZEOF_F77_REAL
+
+/* Define size of SIZEOF_F77_DOUBLE_PRECISION */
+#undef SIZEOF_F77_DOUBLE_PRECISION
+
+/* Define if we cannot determine the type of MPI_Fint at compile time */
+#undef FINT_TYPE_UNKNOWN
+
+/* Supports weak pragma */
+#undef HAVE_PRAGMA_WEAK
+
+/* HP style weak pragma */
+#undef HAVE_PRAGMA_HP_SEC_DEF
+
+/* Cray style weak pragma */
+#undef HAVE_PRAGMA_CRI_DUP
+
+/* Define if using gcc and g77 together */
+#undef USE_GCC_G77_DECLS
+

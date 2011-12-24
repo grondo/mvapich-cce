@@ -1,0 +1,330 @@
+# -------------------------------------------------------------------
+ Copyright (C) 1999-2000 The Regents of the University of California
+ (through E.O. Lawrence Berkeley National Laboratory), subject to
+ approval by the U.S. Department of Energy.
+    
+ Your use of this software is under license -- the license agreement is
+ attached and included in the MVICH top-level directory as LICENSE.TXT
+ or you may contact Berkeley Lab's Technology Transfer Department at
+ TTD@lbl.gov.
+     
+ NOTICE OF U.S. GOVERNMENT RIGHTS. The Software was developed under
+ funding from the U.S. Government which consequently retains certain
+ rights as follows: the U.S. Government has been granted for itself and
+ others acting on its behalf a paid-up, nonexclusive, irrevocable,
+ worldwide license in the Software to reproduce, prepare derivative
+ works, and perform publicly and display publicly. Beginning five (5)
+ years after the date permission to assert copyright is obtained from
+ the U.S. Department of Energy, and subject to any subsequent five (5)
+ year renewals, the U.S. Government is granted for itself and others
+ acting on its behalf a paid-up, nonexclusive, irrevocable, worldwide
+ license in the Software to reproduce, prepare derivative works,
+ distribute copies to the public, perform publicly and display
+ publicly, and to permit others to do so.
+
+ Some of these source files were derived from code in the MPICH 
+ implementation of MPI, which was developed by Argonne National Laboratory 
+ and Mississippi State University.
+ See the file MPICH_COPYRIGHT in the top-level directory for more
+ information. 
+# -------------------------------------------------------------------
+
+See the "INSTALL" file for instructions on how to build MVICH
+with MPICH-1.2.1.  
+
+See the "CHANGES" file for a list of major code changes at each
+revision level.
+
+OVERVIEW
+========
+This directory contains MVICH, an ADI2 device for VIA.  The
+implementation passes all but five of the MPICH conformance 
+test suite, it fails on the cancel of SEND operations and
+does not always honor user-supplied error handlers.  
+
+This is a single threaded implementation that assumes a reliable
+network.  There are plans to develop a multi-threaded implementation,
+based on MPICH2.  We have no time-frame for this implementation.
+
+We assume the VIA network provides reliable delivery.
+We considered adding timeouts and retransmission handlers to MVICH
+for unreliable networks but this would only work for VIA messaging
+and not remote DMA opertions.  Since one obtains the highest performance
+with RDMA operations and most VIA implementation support reliable
+delivery (including M-VIA version 1.2b2) we did not add MVICH
+support for unreliable networks.
+
+CONNECTION MANAGEMENT
+=====================
+By default, MVICH uses a client-server scheme to establish the
+VI connections from each MPI process to all other MPI processes.
+Processes with lower MPI rank act in the server role and processes
+with higher rank act as clients.  As the number of processes in
+the application increases, it should be faster to use the (optional)
+VIPL peer-to-peer connection manager.  This is an option in the VIPL
+specification so not all implementations may support it.  If your
+VIPL implementation supports peer-to-peer and you with to use it,
+you must configure MIVCH with the -DVIADEV_PEER_TO_PEER compile-time
+option.  See the INSTALL file for options.
+
+PROCESS MANAGERS
+================
+When running MPI applications, there must be some agent that
+starts the MPI processes on the local and remote nodes.
+MVICH has a simple process manager interface and currently
+supports a simple RSH/SSH manager (supplied with MVICH) as
+well as the Argonne MPD manager.
+MPD is under active development by the MPICH team.
+It should provide rapid job startup and efficient delivery
+of signals and re-direction of stdio to and from the remote
+processes.
+By default, MVICH is configured to use RSH.  See the INSTALL file
+for information on how to configure MVICH to use MPD.  Also,
+note the mpirun command line switch needed for use with MPD.
+
+Note: As of the 1.0 release, MVICH now uses the MPICH mpirun 
+scripts to start an MPI program. 
+
+HOW TO RUN CODES USING THE RSH/SSH PROCESS MANAGER
+==================================================
+If you are using the RSH/SSH process manager supplied (by default)
+with MVICH, use:
+
+     mpirun [options] -np N host1 ... hostN a.out args
+  or 
+     mpirun [options] -np N -hostfile hfile a.out args
+
+  where:
+     * "-np N" 
+       specifies the number of processes to use for this MPI application
+     * "host1 ... hostN" are the hostnames of the nodes where the N
+       processes will run
+     * "-hostfile hfile"
+       specifies to look in the file named "hfile" for a list of
+       hostnames.  The hostnames should appear on seperate lines of
+       the file.  The first N hosts specified will be used.  Listing
+       a single host multiple times will cause multiple processes to
+       run on that node.
+     * "a.out" is the name of the MPI binary
+     * "args" are the arguments to a.out
+  Available options are:
+     * "-paramfile <filename>"
+       Specifies the name of a file containing MVICH runtime
+       parameters.  The file "param.sample" included in this
+       distribution is a sample parameter file.
+     * "-show" 
+       prints out the command lines that would be executed on the
+       remote nodes but does not execute them.
+     * "-xterm"
+       starts up each process in a separate xterm.
+     * "-debug"
+       starts up each process under gdb in a separate xterm.
+       
+NOTE: change the definition of the "DEBUGGER" macro in
+      process/mpirun_rsh.c to select a different debugger.
+      For example, the "ddd" debugger interface will work.
+
+NOTE: To use ssh, rather than rsh, define the macro USE_SSH when
+      compiling mpirun_rsh and make sure the RSH macro in
+      process/mpirun_rsh.c is consistant with where ssh is defined
+      on your system.
+
+HOW TO RUN CODES USING THE MPD PROCESS MANAGER
+==================================================
+You must first configure, build and install the MPD process
+manager on your system.  See the INSTALL file for details.
+Secondly, you must start the persistant MPD daemons on each
+node.  See the MPICH documentation for this information.
+Note that MPD can either be run by root, or as an individual
+user.  There may be security implications when running the
+daemons as root. 
+
+Once the daemons are running, to start an MPI job use:
+     mpirun -use_mpd [options] -np N a.out args
+
+  where:
+     * "-np N" 
+       specifies the number of processes to use for this MPI application
+     * "a.out" is the name of the MPI binary
+     * "args" are the arguments to a.out
+  Available options are:
+     * "-paramfile <filename>"
+       Specifies the name of a file containing MVICH runtime
+       parameters.  The file "param.sample" included in this
+       distribution is a sample parameter file.
+
+Note that MPD is under active development and is not yet a
+stable process manager.  Also, the version that ships with
+MPICH 1.2.1 will not always work under RedHat 7.1.
+The MPICH 1.2.2 release is expected soon.
+
+MAILING LIST
+============
+We have set up a mailing list mvich-users@george.lbl.gov. 
+Everyone who has downloaded MVICH from our web site is on this list.
+If you wish to be removed from this mailing list, please send
+a message via@nersc.gov asking to be removed.
+
+BUG REPORTS
+===========
+Please mail bug reports to via@nersc.gov.
+Please include sufficient detail and possibly a small MPI 
+program that will exhibit the problem.
+
+HOW TO RUN THE MPICH CONFORMANCE TESTS
+======================================
+Some modifications to the MPICH conformance test suite scripts
+are necessary to run the tests with MVICH.  See the README
+file in $MPICH_ROOT/mpid/via/testing/1.2.X for instructions
+on how to install the modifications.
+
+IMPLEMENTATION NOTES
+====================
+MVICH performs point to point communication over VIA by implementing
+the MPI message passing operations using VIA send/recv for short messages 
+and RDMA transfers (if the NIC supports it) for long messages.
+At initialization time, each process creates N-1 VIs and establishes
+a connection from each process to every other process in the application.
+MPI buffering is achieved through the use of fixed-size buffers
+called "vbufs" which are pinned in memory and registered with the VIA NIC.  
+Vbufs contain protocol control information, and in some cases, user
+message data.
+
+Four point-to-point protocols have been implemented:
+
+ * EAGER:  This protocol is used for short messages.
+	   The data is immediately sent in a series of vbufs and
+           is buffered on the receive side until the matching MPI 
+           receive operation is executed.
+
+ * R3:     This is the standard three way handshake.  The MPI sender
+           transmits a "request to send" control message to the
+           receiveing process.  This request is queued until the
+           matching MPI received is processed, when an "ok to send"
+           control message is transmitted back to the sender.
+           At this point, the sender transmits a series of vbufs
+           containing the user message to the receiver.
+           Control flow (see below) may cause the sender to suspend
+           transmission of additional data until more receiving vbufs 
+           are available.
+
+ * RGET:   This protocol uses the RDMA WRITE capability of the VIA NIC
+           (if available).  MVICH will pin and register the user's
+           send buffer with the NIC.  It will then send a "request to send"
+           control message to the receiver process.  This control message
+           will be queued until the matching MPI RECV is processed.
+           The receiving process will then pin the user's receive
+           buffer, register it with the NIC on that node, and send
+           an "ok to send" control message back to the sender with
+           the virtual address of the receiver's user buffer.
+           The sender processes will then request that the VIA NIC
+           preform an RDMA WRITE operation directly from the sending user's
+           memory to the receiving user's memory, with no immediate
+           copying.
+
+ * RPUT:   This protocol uses the RDMA READ capability of the VIA NIC
+           (if available).  It is similar to the RGET protocol except
+           that it involves fewer control messages.  As with RGET, it
+           will pin the user's send memory and register it with the NIC.
+           It will send a "request to send" control message along with
+           the virtual adderss of the sender's memory.  After the 
+           matching MPI RECV operation occurs on the receiver, the
+           receiving process pins the user receive memory and registers
+           it with its NIC.  The receiving process then requests that
+           its NIC perform an RDMA READ operation directly from the
+           senders memory to the receiver.
+
+Flow Control
+------------
+In VIA, the price one pays for increased performance is an increase
+in complexity by the application.  Since the operating system has
+been removed from VIA message passing, it is up to the application
+to insure that a buffer (and one of sufficient size) has been posted 
+on a VI RECV queue prior to a message delivery.  In this case, the
+application is the MPI library and the complexity is to insure that
+whenever a message is sent on a VI, that a vbuf has been pre-posted
+on the RECV queue of the VI on the other end of the connection.
+In order to insure this, a credit system has been implemented
+to account for vbuf usage on VI RECV queues.  At MPI initialization time
+each process posts a fixed number, say M, of vbufs on the RECV
+queue of each of its VIs.  Similarly, it grants M credits to the
+SEND side of each VI.  When a message is sent over a VI, the
+sender decrements its credit.  If there are no credits left, the
+message cannot be sent.  When a message is received on the RECV
+queue of a VI, the receiving process preposts another vbuf.  The
+sender gets a credit update piggybacked on the next message it 
+receives over that VI.  The update informs the sender of the number
+of new vbufs that have been posted on that VI and allows it to make
+progress on any stalled communication over that VI.  When a sender 
+runs out of credits on a given VI, it attempts to make progress 
+on other connections until a credit update arrives.
+
+Of the above protocols, R3 is the fallback.  If not enough credits
+exist on a VI for an EAGER send, the sender falls back to using R3.
+For RGET and RPUT, if either side is unable to register the
+user's memory then RDMA cannot be used and the protocol reverts to R3.
+
+Memory Registration
+-------------------
+Another complexity that a VIA application must handle is memory
+registration.  All vbufs, as well as the descriptors that describe
+them to the NIC, must be locked in memory so that their virtual
+to physical address mapping does not change during the course
+of the messaging operation.  In addition, this address translation
+must be known to the VIA NIC so that it may directly access memory
+without interrupting the CPU.  Vbufs are continually re-used so MVICH
+pins and registers them at initilization time for the lifetime of
+the process.  This memory is a part of the user process, but is
+allocated and managed by the MPI library so the end user is unaware
+of its existance.
+
+On the other hand the RPUT and RGET RDMA operations used for zero
+copy transfer of large messages must also pin and register the
+source and target memory regions.  This memory is known to the
+end user since he or she allocated it in the first place.
+This would not be a problem if MVICH registered the memory just
+prior to the RDMA operation, then un-register it just after
+the operation was complete.  However, memory registration is an
+expensive operation, requiring the operating system to lock the
+pages in memory and to transfer the page tables to the VIA NIC.
+Further, it is often the case in an MPI application, that the 
+same user data region is used over and over again for sending
+and receiving data.  It would be inefficient to constantly register
+the memory, use it, unregister it, then turn around and register
+it again for another use.
+For this reason, MVICH uses a dynamic memory registration scheme.
+The idea is to not unregister memory after its use in the hopes that
+it will be used again soon.  A record of the registered memory is kept
+in a hash table.  Whenever a region of memory needs to be registered, 
+the hash table is conulted to determine if it has already been registered.
+If so, the operation can continue, if not the memory needs
+to be registered and the region recorded in the hash table.
+Of course, there are limits to the number of pages that can be
+locked and registered.  If these limits are exceeded, the registration
+attempt fails and the least recently used inactive memory region is
+un-registered.  Registration of the new memory region is attempted again, 
+and this process continues until either the registration is successful 
+or there is nothing left to unregister.  In the latter case, a registration
+failure is returned to the caller.
+
+Clearly, this registration scheme works well for applications that
+re-use the same memory region for message passing and just adds overhead
+when message passing memory is never re-used.  It also requires 
+that the process never "give up" the memory.  The user can malloc
+and free the memory as long as the freed memory is not given 
+up by the process.  Modern versions of the Linux glibc malloc
+implementations may, in fact, do this.  For small allocations, malloc
+allocates off the heap by re-using previously freed memory or by
+extending the heap using the "brk" system call.  For large allocations,
+it uses mmap to map additional pages into the processes address space.
+When malloced memory is freed by the application, the malloc library
+will unmap the memory if its a large allocation and may hold on to
+the smaller heap-based allocations for later re-use.  If, however,
+there is sufficient amout of free space near the end of the heap,
+it may shrink the heap by a call to the brk system call and give
+the memory back to the system.  In order for the dynamic memory
+registration to work, MVICH issues calls to the mallopt library
+function asking it not to use mmap and to never shrink the heap.
+In MVICH, dynamic memory registration is used by default, but
+may be disabled at compile time by undefining the LAZY_MEM_UNREGISTER 
+macro in the dreg.h file.

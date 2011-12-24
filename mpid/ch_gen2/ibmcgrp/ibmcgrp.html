@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML><HEAD>
+<TITLE>ibmcgrp.html</TITLE>
+<!-- Source: ibmcgrp.h -->
+<!-- Generated with ROBODoc Version 3.2.3 (Apr 20 2003) -->
+<!-- ROBODoc (c) 1994-2001 by Frans Slothouber and Jacco van Weert. -->
+</HEAD><BODY BGCOLOR="#FFFFFF">
+<A NAME="ibmcgrp.h">Generated from ibmcgrp.h</A> with ROBODoc v3.2.3 on Sun Apr 11 12:20:49 2004
+<BR>
+<H3 ALIGN="center">TABLE OF CONTENTS</H3>
+<OL>
+<LI><A HREF="#Ibmcgrp">Multicast Group App/Ibmcgrp</A>
+<LI><A HREF="#ibmcgrp_action">Multicast Group App/ibmcgrp_action</A>
+<LI><A HREF="#ibmcgrp_bind">Multicast Group App/ibmcgrp_bind</A>
+<LI><A HREF="#ibmcgrp_destroy">Multicast Group App/ibmcgrp_destroy</A>
+<LI><A HREF="#ibmcgrp_init">Multicast Group App/ibmcgrp_init</A>
+<LI><A HREF="#ibmcgrp_opt_t">Multicast Group App/ibmcgrp_opt_t</A>
+<LI><A HREF="#ibmcgrp_run">Multicast Group App/ibmcgrp_run</A>
+<LI><A HREF="#ibmcgrp_t">Multicast Group App/ibmcgrp_t</A>
+</OL>
+<HR>
+
+<H2><A NAME="Ibmcgrp">Multicast Group App/Ibmcgrp</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>Ibmcgrp</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> The <B>Ibmcgrp</B> object create/join and leave multicast group.
+
+</PRE><FONT SIZE="+1">AUTHOR</FONT>
+<PRE><B> Eitan Zahavi, Mellanox.
+
+</B></PRE>
+<HR>
+
+<H2><A NAME="ibmcgrp_action">Multicast Group App/ibmcgrp_action</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM>  <B>ibmcgrp_action</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE>  Enumerates the possible Action modes.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>
+#define IBMCGRP_NOACT  0
+#define IBMCGRP_CREATE 1
+#define IBMCGRP_JOIN   2
+#define IBMCGRP_LEAVE  3
+</PRE>
+<HR>
+
+<H2><A NAME="ibmcgrp_bind">Multicast Group App/ibmcgrp_bind</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_bind</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> Binds ibmcgrp to a local port.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+ib_api_status_t <B>ibmcgrp_bind</B>( IN <A HREF="#ibmcgrp_t">ibmcgrp_t</A> * p_ibmcgrp );
+
+</PRE><FONT SIZE="+1">PARAMETERS</FONT>
+<PRE> p_ibmcgrp
+    [in] Pointer to an <A HREF="#ibmcgrp_t">ibmcgrp_t</A> object.
+
+</PRE><FONT SIZE="+1">RETURN VALUES</FONT>
+<PRE> IB_SUCCESS if OK
+
+</PRE><FONT SIZE="+1">NOTES</FONT>
+<PRE><EM>
+</EM></PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<BR>
+
+<HR>
+
+<H2><A NAME="ibmcgrp_destroy">Multicast Group App/ibmcgrp_destroy</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_destroy</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> The <B>ibmcgrp_destroy</B> function destroys an ibmcgrp object, releasing
+ all resources.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+void <B>ibmcgrp_destroy</B>( IN <A HREF="#ibmcgrp_t">ibmcgrp_t</A> * p_ibmcgrp );
+
+
+</PRE><FONT SIZE="+1">PARAMETERS</FONT>
+<PRE> p_ibmcgrp
+    [in] Pointer to a Multicast Group App object to destroy.
+
+</PRE><FONT SIZE="+1">RETURN VALUE</FONT>
+<PRE> This function does not return a value.
+
+</PRE><FONT SIZE="+1">NOTES</FONT>
+<PRE><EM> Performs any necessary cleanup of the specified Multicast Group App object.
+ Further operations should not be attempted on the destroyed object.
+ This function should only be called after a call to <A HREF="#ibmcgrp_init">ibmcgrp_init</A>.
+
+</EM></PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<PRE> <A HREF="#ibmcgrp_init">ibmcgrp_init</A>
+</PRE>
+<HR>
+
+<H2><A NAME="ibmcgrp_init">Multicast Group App/ibmcgrp_init</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_init</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> The <B>ibmcgrp_init</B> function initializes a Multicast Group App object for use.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+ib_api_status_t <B>ibmcgrp_init</B>( IN <A HREF="#ibmcgrp_t">ibmcgrp_t</A> * const p_ibmcgrp,
+                              IN <A HREF="#ibmcgrp_opt_t">ibmcgrp_opt_t</A> * const p_opt,
+                              IN const osm_log_level_t log_flags
+                              );
+
+
+</PRE><FONT SIZE="+1">PARAMETERS</FONT>
+<PRE> p_ibmcgrp
+    [in] Pointer to an <A HREF="#ibmcgrp_t">ibmcgrp_t</A> object to initialize.
+
+ p_opt
+    [in] Pointer to the options structure.
+
+ log_flags
+    [in] Log level flags to set.
+
+</PRE><FONT SIZE="+1">RETURN VALUES</FONT>
+<PRE> IB_SUCCESS if the Multicast Group App object was initialized successfully.
+
+</PRE><FONT SIZE="+1">NOTES</FONT>
+<PRE><EM> Allows calling other Multicast Group App methods.
+
+</EM></PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<PRE> ibmcgrp object, ibmcgrp_construct, <A HREF="#ibmcgrp_destroy">ibmcgrp_destroy</A>
+</PRE>
+<HR>
+
+<H2><A NAME="ibmcgrp_opt_t">Multicast Group App/ibmcgrp_opt_t</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_opt_t</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> <A HREF="#Ibmcgrp">Ibmcgrp</A> options structure.  This structure contains the various
+ specific configuration parameters for ibmcgrp.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+typedef struct _ibmcgrp_opt
+{
+  ib_gid_t  mgid;
+  uint16_t  port_num;
+  uint16_t  rate;
+  uint16_t  mtu;
+  uint32_t  transaction_timeout;
+  boolean_t force_log_flush;
+  uint32_t retry_count;
+  uint8_t  action;
+  char *log_file;
+} <B>ibmcgrp_opt_t</B>;
+
+
+</PRE><FONT SIZE="+1">FIELDS</FONT>
+<PRE>
+</PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<BR>
+
+<HR>
+
+<H2><A NAME="ibmcgrp_run">Multicast Group App/ibmcgrp_run</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_run</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> Runs the ibmcgrp action: create, join, leave
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+ib_api_status_t <B>ibmcgrp_run</B>( IN <A HREF="#ibmcgrp_t">ibmcgrp_t</A> * const p_ibmcgrp );
+
+
+</PRE><FONT SIZE="+1">PARAMETERS</FONT>
+<PRE> p_ibmcgrp
+    [in] Pointer to an <A HREF="#ibmcgrp_t">ibmcgrp_t</A> object.
+
+</PRE><FONT SIZE="+1">RETURN VALUES</FONT>
+<PRE> IB_SUCCESS on success
+
+</PRE><FONT SIZE="+1">NOTES</FONT>
+<PRE><EM>
+</EM></PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<BR>
+
+<HR>
+
+<H2><A NAME="ibmcgrp_t">Multicast Group App/ibmcgrp_t</A></H2>
+
+<FONT SIZE="+1">NAME</FONT>
+<PRE><EM> <B>ibmcgrp_t</B>
+
+</EM></PRE><FONT SIZE="+1">DESCRIPTION</FONT>
+<PRE> <A HREF="#Ibmcgrp">Ibmcgrp</A> structure.
+
+ This object should be treated as opaque and should
+ be manipulated only through the provided functions.
+
+</PRE><FONT SIZE="+1">SYNOPSIS</FONT>
+<PRE>/
+typedef struct _ibmcgrp
+{
+  osm_log_t          *p_log;
+  struct _osm_vendor *p_vendor;
+  osm_bind_handle_t   h_bind;
+  osm_mad_pool_t      mad_pool;
+
+  <A HREF="#ibmcgrp_opt_t">ibmcgrp_opt_t</A>       *p_opt;
+  ib_net64_t          port_guid;
+} <B>ibmcgrp_t</B>;
+
+
+</PRE><FONT SIZE="+1">FIELDS</FONT>
+<PRE> p_log
+    Log facility used by all <A HREF="#Ibmcgrp">Ibmcgrp</A> components.
+
+ p_vendor
+    Pointer to the vendor transport layer.
+
+  h_bind
+     The bind handle obtained by osm_vendor_sa_api/osmv_bind_sa
+
+  mad_pool
+     The mad pool provided for teh vendor layer to allocate mad wrappers in
+
+ p_opt
+    ibmcgrp options structure
+
+ guid
+    guid for the port over which ibmcgrp is running.
+
+</PRE><FONT SIZE="+1">SEE ALSO</FONT>
+<BR>
+
+</BODY></HTML>

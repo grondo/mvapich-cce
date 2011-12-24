@@ -1,0 +1,89 @@
+# -*-Shell-script-*-
+
+die() {
+    echo -n "Failure in "
+    echo $1
+    echo "Please file an error report to mvapich-discuss@cse.ohio-state.edu with all your log files."
+    exit 1
+}
+
+die_setup() {
+    echo $1
+    echo "Exiting."
+    exit 1
+}
+
+arch() {
+    if [ "`uname -m`" = "i686" ]; then
+	ARCH=_IA32_
+    elif [ "`uname -m`" = "ia64" ]; then
+	ARCH=_IA64_
+    elif [ "`uname -m`" = "x86_64" ]; then
+	if [ -z "`grep 'model name' </proc/cpuinfo |grep Opteron`" ]; then
+	    ARCH=_EM64T_
+	elif [ -z "`grep 'model name' </proc/cpuinfo |grep Intel`" ]; then
+	    ARCH=_X86_64_
+            if [ "`grep 'siblings' </proc/cpuinfo | head -1 | awk '{ print $3 '}`" = "4" ]; then
+                PROCESSOR=_AMD_QUAD_CORE_
+            fi
+	else
+	    ARCH=unknown
+	fi
+    elif [ "`uname -m`" = "i86pc" ]; then
+	ARCH=SOLARIS
+    elif [ "`uname -m`" = "Power Macintosh" ]; then
+	ARCH=MAC_OSX
+    elif [ "`uname -m`" = "ppc64" ]; then
+    ARCH=_PPC64_
+    else
+	ARCH=unknown
+    fi
+
+    if [ $ARCH = "unknown" ]; then
+	echo
+	echo "Could not determine architecture.  Please alert script maintainer."
+	echo
+	echo "Please choose architecture:"
+	echo
+	echo "1) IA32"
+	echo "2) IA64"
+	echo "3) EM64T"
+	echo "4) X86_64"
+	echo "5) SOLARIS"
+	echo "6) MAC_OSX"
+	echo "7) PPC64"
+	echo
+	choice=0
+
+	while [ -z $choice ] || [ $choice -lt 1 ] || [ $choice -gt 6 ]; do
+	    echo -n "==> "
+	    read choice
+	    choice=`echo $choice |sed 's/[^0-9-]//g'`
+	done
+
+	case $choice in
+	    1)
+		ARCH=_IA32_
+		;;
+	    2)
+		ARCH=_IA64_
+		;;
+	    3)
+		ARCH=_EM64T_
+		;;
+	    4)
+		ARCH=_X86_64_
+		;;
+	    5)
+		ARCH=SOLARIS
+		;;
+	    6)
+		ARCH=MAC_OSX
+		;;
+        7)
+        ARCH=_PPC64_
+        ;;
+	esac
+    fi
+}
+

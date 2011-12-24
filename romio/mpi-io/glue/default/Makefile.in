@@ -1,0 +1,34 @@
+CC          = @CC@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+RANLIB      = @RANLIB@
+srcdir      = @srcdir@
+
+INCLUDE_DIR = -I@MPI_INCLUDE_DIR@ -I../../../include -I${srcdir}/../../../mpi-io -I${srcdir}/../../../adio/include -I../../../adio/include
+CFLAGS      = -DHAVE_MPI_INFO_SRC @CFLAGS@ $(MPIOPROFILE) $(INCLUDE_DIR)
+
+@VPATH@
+
+MPIO_OBJECTS = mpio_file.o mpio_err.o
+
+all: $(LIBNAME)
+
+.SUFFIXES: $(SUFFIXES) .p
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+.c.p:
+	@cp $(srcdir)/$*.c _$*.c
+	$(CC) $(CFLAGS) -c _$*.c
+	@rm -f _$*.c
+
+profile: 
+	sleep 1
+
+$(LIBNAME): $(MPIO_OBJECTS)
+	$(AR) $(LIBNAME) $(MPIO_OBJECTS)
+	$(RANLIB) $(LIBNAME) 
+
+clean:
+	@rm -f *.o

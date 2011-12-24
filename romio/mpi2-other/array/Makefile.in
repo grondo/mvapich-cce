@@ -1,0 +1,57 @@
+CC          = @CC@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+RANLIB      = @RANLIB@
+srcdir      = @srcdir@
+CC_SHL      = @CC_SHL@
+SHLIBNAME   = @SHLIBNAME@
+
+INCLUDE_DIR = -I@MPI_INCLUDE_DIR@ -I../../include -I${srcdir}/../../mpi-io -I${srcdir}/../../adio/include -I../../adio/include
+CFLAGS      = @CFLAGS@ $(MPIOPROFILE) $(INCLUDE_DIR)
+
+top_builddir  = @master_topbuild_dir@
+LIBTOOL       = @LIBTOOL@
+C_COMPILE_SHL = $(CC_SHL) @CFLAGS@ $(INCLUDE_DIR)
+
+@VPATH@
+
+MPIO_OBJECTS = subarray.o darray.o
+
+MPIO_TMP_POBJECTS = subarray.p darray.p
+
+MPIO_REAL_POBJECTS = _subarray.o _darray.o
+
+all: $(LIBNAME)
+	@if [ "@ENABLE_SHLIB@" != "none" ] ; then \
+	    $(MAKE) $(SHLIBNAME).la ;\
+	fi
+
+.SUFFIXES: $(SUFFIXES) .p .lo
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+.c.lo:
+	$(C_COMPILE_SHL) -c $<
+	@mv -f $*.o $*.lo
+
+.c.p:
+	@cp $(srcdir)/$*.c _$*.c
+	$(CC) $(CFLAGS) -c _$*.c
+	@rm -f _$*.c
+
+profile: $(MPIO_TMP_POBJECTS)
+	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
+	$(RANLIB) $(LIBNAME) 
+	@rm -f _*.o
+
+$(LIBNAME): $(MPIO_OBJECTS)
+	$(AR) $(LIBNAME) $(MPIO_OBJECTS)
+	$(RANLIB) $(LIBNAME) 
+
+MPIO_LOOBJECTS = $(MPIO_OBJECTS:.o=.lo)
+$(SHLIBNAME).la: $(MPIO_LOOBJECTS) 
+	$(AR) $(SHLIBNAME).la $(MPIO_LOOBJECTS) $(MPIO_EXTRA_LOOBJECTS)
+	$(RANLIB) $(SHLIBNAME) 
+
+clean:
+	@rm -f *.o *.lo

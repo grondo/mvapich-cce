@@ -1,0 +1,130 @@
+#! /bin/sh
+#
+# a configure script for vapi w/ mpd setup
+#
+# Unpack device_args
+#
+
+echo setup_ch_psm starts...  $device_args $configure_echo $otherargs $CFLAGS 
+
+for arg in $device_args $@; do
+    echo $arg  for loop in setup_ch_psm
+    case $arg in 
+     -echo) set -x 
+       ;;
+     -disable-registration | --disable-registration)
+	otherargs="$otherargs -disable-registration"
+       ;;
+     -disable-pthread_atfork | --disable-pthread_atfork)
+        otherargs="$otherargs -disable-pthread_atfork"
+       ;;
+     -u | -usage | --usage | --usag | --usa | --us | --u | -help | --help )
+	exit 0;
+	;;
+     *) if test -n "$arg" ; then
+	    echo "unrecognized argument $arg"
+	fi
+	;;
+    esac
+done
+
+if [ -z "$top_srcdir" ] ; then 
+    top_srcdir="."
+fi
+
+echo "About to do ch_psm device"
+DEVICE_KIND=network
+#
+echo "Configuring ch_psm subsystem..."
+# Make sure that the lib Makefile gets remade
+if test -n "$configure_echo" ; then
+    otherargs="$otherargs -echo"
+fi
+
+IS_HETERO=0
+
+if test "$COMM" = "bproc" ; then
+    # Here would go bproc options, such as
+    #LIBS="$LIBS -lbproc -Wl,--undefined=beowulf_sched_shim,--undefined=get_beowulf_job_map  -lbeomap -lbeostat -ldl
+    # Note that we have to make sure that this is exported back up to the MPICH
+    # configure
+    # Do define the remote shell and copy commands
+    RSHCOMMAND="/usr/bin/bpsh"
+    # Note that RCPCOMMAND is not yet exported to mpirun.vapi.in
+    RCPCOMMAND="${RCPCOMMAND-/usr/bin/bpcp}"
+
+fi
+
+# Have mpd configuration dependent on USE_MPD_XXX being defined
+#  Check if USE_MPD_XXX is defined in CFLAGS, if yes, enable MPD
+
+ENABLE_MPD=`echo "$CFLAGS" | sed -e 's/.*DUSE_MPD.*/enabled/'`
+
+if test "x$ENABLE_MPD" = "xenabled" ; then 
+
+# Create a dummy file for the need for MPD 
+#    cat > mpid/mpd/vapi.mpd <<EOF
+# This is just dummy file for flagging the need for MPD 
+#EOF
+
+    # Make sure mpd directory exists
+    if [ ! -d mpid/mpd ] ; then 
+	mkdir mpid/mpd
+    fi
+    # Run configure in the mpd directory
+    RSHCOMMAND="${RSHCOMMAND-$rshcommand}"
+    echo "Configuring mpd subsystem..."
+    (cd mpid/mpd ; \
+	export VPATH ; export RSHCOMMAND ;\
+	export CC ; export CLINKER ; \
+	$top_srcdir/mpid/mpd/configure --with-cc="$CC" \
+		    --with-opt="$OPTFLAGS" \
+		    --with-top_srcdir=$top_srcdir \
+		    -srcdir=$top_srcdir/mpid/mpd \
+		    -prefix=$prefix \
+		    -exec-prefix=$exec_prefix \
+		    -libdir=$libdir $enable_args )
+    if test $? != 0 ; then
+	echo "Configure of the mpd sub-system may have failed!"
+	exit 1
+    fi
+    #
+    # The following were moved here from the top-level configure
+    if test -s mpid/mpd/mpd.hosts  ; then
+	# Is this the right thing to do?  
+	/bin/rm -f mpid/mpd/mpd.hosts
+    fi
+    HOST=""
+    HOST="`hostname 2>/dev/null`"
+    # Note that uname -n may not produce a usable hostname.  
+    # Any suggestions?
+    if test "$HOST" = "" ; then
+	HOST="`uname -n`"
+    fi
+    cat > mpid/mpd/mpd.hosts <<EOF
+# Change this file to contain the machines that you want to use
+# to run MPI jobs on.  The format is one host name per line, as in
+#    hostname
+# The hostname should be the same as the result from the command "hostname"
+$HOST
+$HOST
+$HOST
+$HOST
+$HOST
+EOF
+    #
+    echo "Finished configuring the mpd subsystem"
+
+else # if mpd is not enabled
+    echo "No addition setup since mpd is not enabled" 
+fi
+
+# Setup the MPIBOOT etc.
+# Use eval to expand the value of bindir.  Note that bindir is often
+# set to ${exec_prefix}/bin, so we eval again
+echo Use ${bindir} to set up variables MPIBOOT and MPIUNBOOT
+eval MPIBOOT=${bindir}/mpichboot
+eval MPIBOOT=$MPIBOOT
+eval MPIUNBOOT=${bindir}/mpichstop
+eval MPIUNBOOT=$MPIUNBOOT
+

@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Most variables here can be overridden by exporting them in the environment
+# before running this script.  Default values have been provided if the
+# environment variable is not already set.
+
+source ./make.mvapich.def.smp
+
+# The target architecture.  If not exported outside of this script,
+# it will be found automatically or prompted for if necessary.
+# Supported: "_IA32_", "_IA64_", "_EM64T_", "_X86_64_"
+#
+if [ -z "$ARCH" ]; then
+    arch
+fi
+
+# Mandatory variables.  All are checked except CXX and F90.
+PREFIX=${PREFIX:-/usr/local/mvapich}
+export CC=${CC:-gcc}
+export CXX=${CXX:-g++}
+export F77=${F77:-g77}
+export F90=${F90:-}
+
+#
+# Compiler specific flags. If you are using
+# ICC on IA64 platform, please set COMPILER_FLAG
+# to "icc"
+#
+
+COMPILER_FLAG=${COMPILER_FLAG:-}
+
+if [ "$COMPILER_FLAG" == "icc" ]; then
+       COMPILER_FLAG="-D_ICC_"
+else
+       COMPILER_FLAG=""
+fi
+
+# Check mandatory variable settings.
+if [ -z "$PREFIX" ] || [ -z "$CC" ] || [ -z "$F77" ]; then
+    die_setup "Please set mandatory variables in this script."
+fi
+
+# Optional variables.
+#
+
+# Whether to enable ROMIO support.  This is necessary if building the
+# F90 modules.
+if [ -n "$F90" ]; then
+    ROMIO="--with-romio"
+else
+    ROMIO=${ROMIO:---without-romio}
+fi
+
+# Set this to override automatic optimization setting (-03).
+OPT_FLAG=${OPT_FLAG:--O3}
+
+if [ -n "$PROCESSOR" ]; then
+        PROCESSOR=-D${PROCESSOR}
+else
+        PROCESSOR=
+fi
+
+export LIBS=${LIBS:--lpthread}
+export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} -DEARLY_SEND_COMPLETION -DCH_SMP -D_SMP_ -D_SMP_RNDV_ -D_GNU_SOURCE ${COMPILER_FLAG} $OPT_FLAG}
+
+# Prelogue
+make distclean &>/dev/null
+set -o pipefail
+
+# Configure MVAPICH
+
+echo "Configuring MVAPICH..."
+
+./configure --with-device=ch_smp --with-arch=LINUX -prefix=${PREFIX} \
+	$ROMIO --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
+ret=$?
+test $ret = 0 ||  die "configuration."
+
+# Build MVAPICH
+echo "Building MVAPICH..."
+make 2>&1 |tee make-mine.log 
+ret=$?
+test $ret = 0 ||  die "building MVAPICH."
+
+# Install MVAPICH
+echo "MVAPICH installation..."
+rm -f install-mine.log 
+make install 2>&1 |tee install-mine.log
+ret=$?
+test $ret = 0 ||  die "installing MVAPICH."

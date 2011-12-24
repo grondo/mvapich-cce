@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# Most variables here can be overridden by exporting them in the environment
+# before running this script.  Default values have been provided if the
+# environment variable is not already set.
+
+source ./make.mvapich.def
+
+# The target HCA.  If not exported outside of this script, it will
+# be prompted for.
+#
+# Supported:
+#
+# "_MLX_PCI_EX_SDR_"            [Mellanox PCI-Express (SDR)]
+# "_MLX_PCI_EX_DDR_"            [Mellanox PCI-Express (DDR)]
+# "_MLX_PCI_X_"                 [Mellanox PCI-X]
+# "_PATH_HT_"                   [Pathscale HT]
+# "_IBM_EHCA_"                  [IBM ehca]
+#
+
+# The target architecture.  If not exported outside of this script,
+# it will be found automatically or prompted for if necessary.
+# Supported: "_IA32_", "_IA64_", "_EM64T_", "_X86_64_"
+#
+if [ -z "$ARCH" ]; then
+    arch
+fi
+
+# Mandatory variables.  All are checked except CXX and F90.
+#IBHOME=${IBHOME:-/usr/local/ofed}
+IBHOME=${IBHOME:-/usr}
+IBHOME_LIB=${IBHOME_LIB:-/usr/lib64}
+PREFIX=${PREFIX:-/usr/local/mvapich}
+export CC=${CC:-gcc}
+export CXX=${CXX:-g++}
+export F77=${F77:-g77}
+export F90=${F90:-}
+
+#export CC=gcc34
+#export CXX=g++34
+
+if [ $ARCH = "SOLARIS" ]; then
+    die_setup "MVAPICH GEN2 is not supported on Solaris."
+elif [ $ARCH = "MAC_OSX" ]; then
+    die_setup "MVAPICH GEN2 is not supported on MacOS."
+fi
+
+# Check mandatory variable settings.
+if [ -z "$IBHOME" ] || [ -z "$PREFIX" ] || [ -z "$CC" ] || [ -z "$F77" ]; then
+    die_setup "Please set mandatory variables in this script."
+elif [ ! -d $IBHOME ]; then
+    die_setup "IBHOME directory $IBHOME does not exist."
+fi
+
+# Optional variables.
+#
+
+# Whether to enable ROMIO support.  This is necessary if building the
+# F90 modules.
+if [ -n "$F90" ]; then
+    ROMIO="--with-romio"
+else
+    ROMIO=${ROMIO:---without-romio}
+fi
+
+if [ -n "$PROCESSOR" ]; then
+       PROCESSOR=-D${PROCESSOR}
+else
+       PROCESSOR=
+fi
+
+# Whether to use an optimized queue pair exchange scheme.  This is not
+# checked for a setting in in the script.  It must be set here explicitly.
+# Supported: "-DUSE_MPD_RING", "-DUSE_MPD_BASIC" and "" (to disable)
+HAVE_MPD_RING=${HAVE_MPD_RING:-}
+
+# Set this to override automatic optimization setting (-03).
+OPT_FLAG=${OPT_FLAG:--O3}
+#OPT_FLAG=-g
+
+export LIBS=${LIBS:--L${IBHOME_LIB} -Wl,-rpath=${IBHOME_LIB} -libverbs -lpthread -lm}
+export FFLAGS="-L${IBHOME_LIB} -fPIC"
+export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} -DXRC -DCH_GEN2_UD -D_SMP_ -D_SMP_RNDV_ -I${IBHOME}/include $OPT_FLAG}
+
+# Prelogue
+make distclean &>/dev/null
+
+# Configure MVAPICH
+
+echo "Configuring MVAPICH..."
+./configure --with-device=ch_hybrid --with-arch=LINUX -prefix=${PREFIX} \
+	$ROMIO --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
+
+ret=$?
+test $ret = 0 ||  die "configuration."
+
+# Build MVAPICH
+echo "Building MVAPICH..."
+make 2>&1 |tee make-mine.log 
+ret=$?
+test $ret = 0 ||  die "building MVAPICH."
+
+# Install MVAPICH
+echo "MVAPICH installation..."
+rm -f install-mine.log 
+make install 2>&1 |tee install-mine.log
+ret=$?
+test $ret = 0 ||  die "installing MVAPICH."

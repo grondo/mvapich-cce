@@ -1,0 +1,64 @@
+-----------------------------------------------------
+V03: 
+-----------------------------------------------------
+  o Correct detection of fs_type when lustre: prefix is not given
+  o Further fix on stripe alignment
+  o Tested/Enabled striping hints over Cray XT (Catamount and CNL)
+
+-----------------------------------------------------
+V02:
+-----------------------------------------------------
+The Lustre ADIO driver has been cleaned up quite a lot. Compared 
+to the intital posting, here are the changes:
+  o Removal of dead/redundant code
+  o Removal of asynchronous IO piece as it appears outdated
+  o Bug fixes for setting Lustre Hints
+  o Bug fixes for data sieving 
+  o Improved Setsize operation with one process calling ftruncate 
+  o Improved collective IO with domain partitioning on 
+    Lustre stripe boundary
+
+-----------------------------------------------------
+FAQ:
+  Q: How do I configure the Lustre ADIO driver?
+  A: Please include these options when configuring MVAPICH:
+     --with-romio --with-file-system=lustre
+  
+  Q: What if I need to enable Lustre support along with others?
+  A: You can add support for more file systems as the following:
+     --with-romio --with-file-system=lustre+nfs+pvfs2
+  
+  Q: How do run a program using the Lustre ADIO driver?
+  A: First, Please make sure you are on a Lustre file system. 
+     Second, if you have enabled support for multiple file system, 
+        please give a prefix "lustre:" to the name of the accessing file.
+     For example:
+     # mpicc -o perf romio/test/perf.c
+     # bin/mpirun_rsh -np 2 node01 node02 ./perf -fname lustre:testfile
+
+  Q: My program bails out with this error:
+     **io No such file or directory*?
+  A: Please make sure the following conditions are true:
+     -- you are running on the correct file system
+     -- you have given a correct pathname for the file
+     -- you have set the correct permission for the file or directory 
+
+  Q: My program segfaults with this error: 
+     File locking failed in ADIOI_Set_lock?
+  A: Recent lustre releases requrie an additional mount option to have 
+     correct file locks. So please insert this option into 
+     your lustre mount command: "-o localflock". 
+     For example:
+     # mount -o localflock -t lustre xxxx@o2ib:/datafs /mnt/datafs
+
+-----------------------------------------------------
+
+Contributing:
+  o You may contribute via many different ways, such as 
+    testing results, bug reports, and new feature patches.
+  o We appreciate any courtesy reference of this work.
+  o Disclaimer: you are welcome to try the code, but at your own risk. 
+
+Contact info:
+    For more info, visit http://ft.ornl.gov/projects/io/
+
