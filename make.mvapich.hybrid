@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Most variables here can be overridden by exporting them in the environment
 # before running this script.  Default values have been provided if the
 # environment variable is not already set.
