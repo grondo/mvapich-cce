@@ -90,7 +90,7 @@ void *cm_ud_buf;
 void *cm_ud_send_buf;           /*length is set to 1 */
 void *cm_ud_recv_buf;
 int cm_ud_recv_buf_index;
-int page_size;
+static int page_size;
 
 int MPICM_Lock()
 {
