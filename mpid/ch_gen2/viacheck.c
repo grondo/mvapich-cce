@@ -1220,10 +1220,13 @@ void viadev_process_recv(void *vbuf_addr)
                 nfr_process_retransmit(c, header);
                 return;
             } else {
-                error_abort_all(GEN_ASSERT_ERR,
-                        "header->id (%d)!= "
-                        "c->next_packet_expected (%d)",
-                        header->id, c->next_packet_expected);
+                int dest_rank = c->global_rank;
+                error_abort_all(dest_rank,
+                                "[%s:%d] header->id (%d)!= "
+                                "c->next_packet_expected (%d), source [%s:%d]",
+                                viadev.my_name, viadev.me,
+                                header->id, c->next_packet_expected,
+                                viadev.processes[dest_rank], dest_rank);
             }
         }
 #endif
