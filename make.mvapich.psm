@@ -112,3 +112,11 @@ rm -f install-mine.log
 make install 2>&1 |tee install-mine.log
 ret=$?
 test $ret = 0 ||  die "installing MVAPICH."
+
+for lib in mpich fmpich pmpich pmpich++; do
+   echo Checking for ${DESTDIR}/${PREFIX}/lib/shared/lib${lib}.so
+   [ -f ${DESTDIR}/${PREFIX}/lib/shared/lib${lib}.so ] || \
+        die "MVAPICH install Missing lib${lib}.so"
+done
+
+exit 0
