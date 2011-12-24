@@ -88,7 +88,7 @@ OPT_FLAG=${OPT_FLAG:--O3}
 
 export LIBS=${LIBS:--L${IBHOME_LIB} -Wl,-rpath=${IBHOME_LIB} -libverbs -lpthread -lm}
 export FFLAGS="-L${IBHOME_LIB} -fPIC"
-export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} -DXRC -DCH_GEN2_UD -D_SMP_ -D_SMP_RNDV_ -I${IBHOME}/include $OPT_FLAG}
+export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} -DCH_GEN2_UD -D_SMP_ -D_SMP_RNDV_ -I${IBHOME}/include $OPT_FLAG}
 
 # Prelogue
 make distclean &>/dev/null
