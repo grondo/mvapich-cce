@@ -104,7 +104,7 @@ set -o pipefail
 echo "Configuring MVAPICH..."
 
 ./configure --with-device=ch_gen2 --with-arch=LINUX -prefix=${PREFIX} \
-	$ROMIO --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
+	$ROMIO --enable-sharedlib --enable-debug --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
 ret=$?
 test $ret = 0 ||  die "configuration."
 
