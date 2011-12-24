@@ -89,9 +89,16 @@ else
        PROCESSOR=
 fi
 
+#
+# Check for ibv_wc_status_str in verbs.h
+#
+if ! grep -q ibv_wc_status_str /usr/include/infiniband/verbs.h; then
+   CHAOS_FLAGS="-DNEED_IBV_STATUS_STR";
+fi
+
 export LIBS=${LIBS:--L${IBHOME_LIB} -Wl,-rpath=${IBHOME_LIB} -libverbs -libumad -lpthread}
 export FFLAGS=${FFLAGS:--L${IBHOME_LIB}}
-export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} ${PTMALLOC} -DEARLY_SEND_COMPLETION -DMEMORY_SCALE -DVIADEV_RPUT_SUPPORT -D_SMP_ -D_SMP_RNDV_ -DXRC -DCH_GEN2 -D_GNU_SOURCE ${COMPILER_FLAG}  -I${IBHOME}/include $OPT_FLAG}
+export CFLAGS=${CFLAGS:--D${ARCH} ${PROCESSOR} ${PTMALLOC} -DEARLY_SEND_COMPLETION -DMEMORY_SCALE -DVIADEV_RPUT_SUPPORT -D_SMP_ -D_SMP_RNDV_ -DXRC -DCH_GEN2 -D_GNU_SOURCE ${COMPILER_FLAG}  -I${IBHOME}/include $OPT_FLAG $CHAOS_FLAGS}
 
 echo -n "Checking for RDMAoE support: "
 if ( grep IBV_LINK_LAYER_ETHERNET ${IBHOME}/include/infiniband/verbs.h &> /dev/null ) ; then

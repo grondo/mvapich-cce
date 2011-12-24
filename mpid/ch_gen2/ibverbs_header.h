@@ -63,4 +63,62 @@ double get_us(void);
 # define VIADEV_UNLIKELY(x)    (x)
 #endif
 
+#if NEED_IBV_STATUS_STR
+static inline const char *
+ibv_wc_status_str (enum ibv_wc_status status)
+{
+    switch (status) {
+     case IBV_WC_SUCCESS:            return("Success");
+     case IBV_WC_LOC_LEN_ERR:        return("Local Length Error");
+     case IBV_WC_LOC_QP_OP_ERR:      return("Local QP Operation Error");
+     case IBV_WC_LOC_EEC_OP_ERR:     return("Local EE Context Operation Error");
+     case IBV_WC_LOC_PROT_ERR:       return("Local Protection Error");
+     case IBV_WC_WR_FLUSH_ERR:       return("Work Request Flushed Error");
+     case IBV_WC_MW_BIND_ERR:        return("Memory Management Operation Error");
+     case IBV_WC_BAD_RESP_ERR:       return("Bad Response Error");
+     case IBV_WC_LOC_ACCESS_ERR:     return("Local Access Error");
+     case IBV_WC_REM_INV_REQ_ERR:    return("Remote Invalid Request Error");
+     case IBV_WC_REM_ACCESS_ERR:     return("Remote Access Error");
+     case IBV_WC_REM_OP_ERR:         return("Remote Operation Error");
+     case IBV_WC_RETRY_EXC_ERR:      return("Transport Retry Counter Exceeded");
+     case IBV_WC_RNR_RETRY_EXC_ERR:  return("RNR Retry Counter Exceeded");
+     case IBV_WC_LOC_RDD_VIOL_ERR:   return("Local RDD Violation Error");
+     case IBV_WC_REM_INV_RD_REQ_ERR: return("Remote Invalid RD Request");
+     case IBV_WC_REM_ABORT_ERR:      return("Aborted Error");
+     case IBV_WC_INV_EECN_ERR:       return("Invalid EE Context Number");
+     case IBV_WC_INV_EEC_STATE_ERR:  return("Invalid EE Context State");
+     case IBV_WC_FATAL_ERR:          return("Fatal Error");
+     case IBV_WC_RESP_TIMEOUT_ERR:   return("Response Timeout Error");
+     case IBV_WC_GENERAL_ERR:        return("General Error");
+    }
+    return ("Unknown");
+}
+
+static inline const char *
+ibv_event_type_str (enum ibv_event_type event_type)
+{
+    switch (event_type) {
+     case IBV_EVENT_CQ_ERR:              return ("CQ Error");
+     case IBV_EVENT_QP_FATAL:            return ("QP Fatal");
+     case IBV_EVENT_QP_REQ_ERR:          return ("QP Request Error");
+     case IBV_EVENT_QP_ACCESS_ERR:       return ("QP Access Error");
+     case IBV_EVENT_COMM_EST:            return ("Communication Established");
+     case IBV_EVENT_SQ_DRAINED:          return ("SQ Drained");
+     case IBV_EVENT_PATH_MIG:            return ("Path Migrated");
+     case IBV_EVENT_PATH_MIG_ERR:        return ("Path Migration Request Error");
+     case IBV_EVENT_DEVICE_FATAL:        return ("Device Fatal");
+     case IBV_EVENT_PORT_ACTIVE:         return ("Port Active");
+     case IBV_EVENT_PORT_ERR:            return ("Port Error");
+     case IBV_EVENT_LID_CHANGE:          return ("LID Change");
+     case IBV_EVENT_PKEY_CHANGE:         return ("PKey Change");
+     case IBV_EVENT_SM_CHANGE:           return ("SM Change");
+     case IBV_EVENT_SRQ_ERR:             return ("SRQ Error");
+     case IBV_EVENT_SRQ_LIMIT_REACHED:   return ("SRQ Limit Reached");
+     case IBV_EVENT_QP_LAST_WQE_REACHED: return ("QP Last WQE Reached");
+     case IBV_EVENT_CLIENT_REREGISTER:   return ("Client Reregistration");
+    }
+    return ("Unknown");
+}
+#endif /* NEED_IBV_STATUS_STR */
+
 #endif /* _IBVERBS_HEADER_H */
