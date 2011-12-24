@@ -260,9 +260,10 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
     if(PSM_VERNO <= 0x0103)
       putenv("PSM_DEVICES=shm,ipath");
 
-    if(psm_init(&verno_major, &verno_minor)!=PSM_OK)
+    psm_error_t psm_ret;
+    if((psm_ret = psm_init(&verno_major, &verno_minor)) != PSM_OK)
     {
-      error_abort_all(GEN_EXIT_ERR, "Failed to initialize PSM Device");
+      error_abort_all(GEN_EXIT_ERR, "Failed to initialize PSM Device: %s", psm_error_get_string(psm_ret));
     }
 
     /*
@@ -283,9 +284,9 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
     /*
      * Open a new InfiniBand endpoint handle and identifing endpoint ID.
      */
-    if(psm_ep_open(uuid, NULL, &psmdev.ep, &my_epid)!=PSM_OK)
+    if((psm_ret = psm_ep_open(uuid, NULL, &psmdev.ep, &my_epid)) != PSM_OK)
     {
-        error_abort_all(GEN_EXIT_ERR, "Failed to open an end-point");
+        error_abort_all(GEN_EXIT_ERR, "Failed to open an end-point: %s", psm_error_get_string(psm_ret));
     }
 
     epid_list = (psm_epid_t *)malloc(sizeof(psm_epid_t)*psmdev.np);
@@ -301,19 +302,19 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
     }
 
     psm_ep_connect_timeout_nsecs = viadev_psm_ep_connect_timeout_secs * 1e9;
-    if(psm_ep_connect(psmdev.ep, psmdev.np, epid_list, NULL, errors, 
-                      psmdev.epaddrs, psm_ep_connect_timeout_nsecs)!=PSM_OK)
+    if((psm_ret = psm_ep_connect(psmdev.ep, psmdev.np, epid_list, NULL, errors,
+                      psmdev.epaddrs, psm_ep_connect_timeout_nsecs)) != PSM_OK)
     {
-        error_abort_all(GEN_EXIT_ERR, "Unable to connect the end points");
+        error_abort_all(GEN_EXIT_ERR, "Unable to connect the end points: %s", psm_error_get_string(psm_ret));
     }
 
     free(errors); 
     free(epid_list);
 
-    if(psm_mq_init(psmdev.ep, PSM_MQ_ORDERMASK_ALL, NULL, 0, 
-                   &psmdev.mq)!=PSM_OK)
+    if((psm_ret = psm_mq_init(psmdev.ep, PSM_MQ_ORDERMASK_ALL, NULL, 0,
+                   &psmdev.mq)) != PSM_OK)
     {
-        error_abort_all(GEN_EXIT_ERR, "Unable to initialize MQ");
+        error_abort_all(GEN_EXIT_ERR, "Unable to initialize MQ: %s", psm_error_get_string(psm_ret));
     }
 
     pmgr_close();
