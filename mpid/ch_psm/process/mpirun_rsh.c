@@ -362,10 +362,7 @@ int main(int argc, char *argv[])
     if (!hostfile_on) {
         /* get hostnames from argument list */
         if (argc - optind < nprocs + 1) {
-            fprintf(stderr, "Without hostfile option, hostnames must be "
-                    "specified on command line.\n");
-            usage();
-            exit(EXIT_FAILURE);
+            aout_index = optind;
         }
         aout_index = nprocs + optind;
     } else {

@@ -75,8 +75,18 @@ else
 	psm_hostfile="$machineFile"
     fi
     if [ "x$psm_hostfile" = "x" ]; then
+       alllocallist=""
+       hostname=`hostname`
+       icnt=0
+       while [ $icnt -lt $np ] ; do
+          alllocallist="$alllocallist $hostname"
+          icnt=`expr $icnt + 1`
+       done
        if [ "x$psm_hostlist" != "x" ]; then
 	   psm_args="$psm_args $psm_hostlist"
+       elif [ "$ALL_LOCAL" = "1" ] ; then
+          psm_hostlist=$alllocallist
+          psm_args="$psm_args $psm_hostlist"
        else
 	   if [ "x$PBS_NODEFILE" != "x" ]; then
 	       psm_args="$psm_args -hostfile $PBS_NODEFILE"
@@ -85,8 +95,8 @@ else
 	   elif [ -f "$default_util_machinefile" ]; then
 	       psm_args="$psm_args -hostfile $default_util_machinefile"
            else
-		echo "Need to provide machinefile or a list of machines"
-		exitstatus=1
+               psm_hostlist=$alllocallist
+               psm_args="$psm_args $psm_hostlist"
 	   fi
        fi
     else

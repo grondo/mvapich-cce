@@ -400,10 +400,7 @@ int main(int argc, char *argv[])
 
             }
             else if (argc - optind < nprocs + 1) {
-                fprintf(stderr, "Without hostfile option, hostnames must be "
-                        "specified on command line.\n");
-                usage();
-                exit(EXIT_FAILURE);
+                aout_index = optind;
             }
             else
             {
