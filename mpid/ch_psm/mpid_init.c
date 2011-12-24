@@ -84,12 +84,15 @@ void MPID_Abort(struct MPIR_COMMUNICATOR *comm_ptr,
     fflush(stderr);
     fflush(stdout);
 
-    sprintf(abortString, "%s Aborting program %s", user ? user : "",
-            msg ? msg : "!" );
+    sprintf(abortString, "MPI_Abort() code: %d, rank %d, %s Aborting program %s",
+            code, MPID_MyWorldRank, user ? user : "", msg ? msg : "!" );
 
     MPIR_debug_abort_string = abortString;
     MPIR_debug_state        = MPIR_DEBUG_ABORTING;
     MPIR_Breakpoint();
+
+    /* flip to a negative code for pmgr to indicate a user abort as opposed to a system abort */
+    if (code > 0) { code *= -1; }
 
     pmgr_abort(code, "%s Aborting program %s", user ? user : "",
                msg ? msg : "!" );
