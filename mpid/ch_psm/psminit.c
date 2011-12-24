@@ -305,9 +305,17 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
 
     free(allhostids);
 
-    /*Psm Layer has a bug in shared memory in Psm 2.0 version*/
-    if(PSM_VERNO <= 0x0103)
-      putenv("PSM_DEVICES=shm,ipath");
+    /* if all tasks are on one node, then we can disable ipath to conserve QLogic HCA contexts */
+    if (num_local_nodes == psmdev.np) {
+      /* TODO: need to account for buf mentioned in else case? */
+      /* disable ipath to conserve contexts, but don't override user's setting */
+      if (getenv("PSM_DEVICES") == NULL)
+        putenv("PSM_DEVICES=self,shm");
+    } else {
+      /*Psm Layer has a bug in shared memory in Psm 2.0 version*/
+      if(PSM_VERNO <= 0x0103)
+        putenv("PSM_DEVICES=shm,ipath");
+    }
 
     psm_error_t psm_ret;
     if((psm_ret = psm_init(&verno_major, &verno_minor)) != PSM_OK)
