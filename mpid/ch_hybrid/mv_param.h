@@ -112,6 +112,8 @@ typedef struct {
     uint16_t srq_size;
 
     char profile_base_filename[150];
+
+    int      sleep_on_abort;
 } mvdev_param_info;
 
 #ifdef _SMP_

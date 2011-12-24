@@ -33,14 +33,19 @@
 #define IBV_RETURN_ERR   -3     /* ibverbs funtion return error */
 #define IBV_STATUS_ERR   -4     /* ibverbs funtion status error */
 
-#define error_abort_all(code, message, args...)  {                  \
-        fprintf(stderr, "[%d] Abort: ", mvdev.me);                     \
-        fprintf(stderr, message, ##args);                               \
-        fprintf(stderr, " at line %d in file %s\n", __LINE__, __FILE__);\
-        assert(0); \
-        pmgr_abort(code, message, ##args);        \
-        exit(code);                                                     \
+#define error_abort_all(code, message, args...)  {                       \
+        fprintf(stderr, "[%d] Abort: ", mvdev.me);                       \
+        fprintf(stderr, message, ##args);                                \
+        fprintf(stderr, ": at line %d in file %s\n", __LINE__, __FILE__); \
+        fflush(stdout);                                                  \
+        fflush(stderr);                                                  \
+        error_abort_debug();                                             \
+        assert(0);                                                       \
+        pmgr_abort(code, message, ##args);                               \
+        exit(code);                                                      \
 }
+
+void error_abort_debug();
 
 #define MAX_SEQ_NUM 8191
 #define WINDOW_ABS_MAX  100

@@ -1,22 +1,7 @@
-/*
- * Copyright (C) 1999-2001 The Regents of the University of California
- * (through E.O. Lawrence Berkeley National Laboratory), subject to
- * approval by the U.S. Department of Energy.
- *
- * Use of this software is under license. The license agreement is included
- * in the file MVICH_LICENSE.TXT.
- *
- * Developed at Berkeley Lab as part of MVICH.
- *
- * Authors: Bill Saphir      <wcsaphir@lbl.gov>
- *          Michael Welcome  <mlwelcome@lbl.gov>
- */
-
 #include "viutil.h"
-#include <sys/time.h>
-
-char viadev_event_code_str[64] = {0};
-char viadev_wc_code_str[64] = {0};
+#include "psmparam.h"
+#include <stdio.h>
+#include <unistd.h>
 
 static int error_get_name(char* buf, int size)
 {
@@ -24,21 +9,21 @@ static int error_get_name(char* buf, int size)
 
     /* build the name for this process format as
      *   [rank X: host Y: pid Z] */
-    if (viadev.my_name != NULL && viadev.pids != NULL && viadev.me >= 0) {
+    if (psmdev.my_name != NULL && psmdev.pids != NULL && psmdev.me >= 0) {
         n = snprintf(buf, size, "[rank %d: host %s: pid %d]",
-                viadev.me, viadev.my_name, viadev.pids[viadev.me]
+                psmdev.me, psmdev.my_name, psmdev.pids[psmdev.me]
         );
-    } else if (viadev.my_name != NULL) {
+    } else if (psmdev.my_name != NULL) {
         n = snprintf(buf, size, "[rank %d: host %s]",
-                viadev.me, viadev.my_name
+                psmdev.me, psmdev.my_name
         );
-    } else if (viadev.pids != NULL && viadev.me >= 0) {
+    } else if (psmdev.pids != NULL && psmdev.me >= 0) {
         n = snprintf(buf, size, "[rank %d: pid %d]",
-                viadev.me, viadev.pids[viadev.me]
+                psmdev.me, psmdev.pids[psmdev.me]
         );
     } else {
         n = snprintf(buf, size, "[rank %d]",
-                viadev.me
+                psmdev.me
         );
     }
 
@@ -90,11 +75,3 @@ void error_abort_debug()
 
     return;
 }
-
-double viutil_get_seconds(void)
-{
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    return (double) t.tv_sec + ((double) t.tv_usec / (double) 1e6);
-}
-

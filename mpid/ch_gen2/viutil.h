@@ -40,16 +40,19 @@
 #define IBV_RETURN_ERR   -3     /* ibverbs funtion return error */
 #define IBV_STATUS_ERR   -4     /* ibverbs funtion status error */
 
-#define error_abort_all(code, message, args...)  {                  \
-    if(NULL == viadev.my_name) {                                    \
-        fprintf(stderr, "[%d] Abort: ", viadev.me);                 \
-    } else {                                                        \
-        fprintf(stderr, "[%d:%s] Abort: ", viadev.me, viadev.my_name);  \
-    }                                                               \
-    fprintf(stderr, message, ##args);                               \
-    fprintf(stderr, " at line %d in file %s\n", __LINE__, __FILE__);\
-    pmgr_abort(code, message, ##args);                                                   \
-    exit(code);                                                     \
+#define error_abort_all(code, message, args...)  {                     \
+    if(NULL == viadev.my_name) {                                       \
+        fprintf(stderr, "[%d] Abort: ", viadev.me);                    \
+    } else {                                                           \
+        fprintf(stderr, "[%d:%s] Abort: ", viadev.me, viadev.my_name); \
+    }                                                                  \
+    fprintf(stderr, message, ##args);                                  \
+    fprintf(stderr, ": at line %d in file %s\n", __LINE__, __FILE__);   \
+    fflush(stdout);                                                    \
+    fflush(stderr);                                                    \
+    error_abort_debug();                                               \
+    pmgr_abort(code, message, ##args);                                 \
+    exit(code);                                                        \
 }
 
 extern char viadev_event_code_str[64];
@@ -58,5 +61,7 @@ extern char viadev_wc_code_str[64];
 double viutil_get_seconds(void);
 char *event_code_to_str(int);
 char* wc_code_to_str(int code);
+
+void error_abort_debug();
 
 #endif                          /* _VIUTIL_H */

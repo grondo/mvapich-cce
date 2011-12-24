@@ -48,6 +48,11 @@
 
 extern int                  viadev_rendezvous_threshold;
 
+/* enables a process to sleep before calling exit on an abort;
+ * negative values cause an infinite sleep time and positive
+ * values specify the number of seconds to sleep before exiting */
+extern int                  viadev_sleep_on_abort;
+
 typedef struct {
     unsigned int hca_id;
     unsigned int port_id;

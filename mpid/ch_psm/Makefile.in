@@ -53,20 +53,20 @@ CFLAGS = $(CFLAGS1)
 
 HEADERS  = comm.h cookie.h datatype.h mpid.h mpid_bind.h mpid_time.h  \
 	   queue.h req.h reqalloc.h sbcnst2.h  \
-	   psmpriv.h psmparam.h \
+	   psmpriv.h viutil.h psmparam.h \
 	   attach.h bcast_info.h coll_shmem.h mpid_smpi.h
 
 MPICHSOURCE = queue.c sbcnst2.c tr2.c sbcnst2.h tr2.h
 MPICHOBJECTS = queue.o sbcnst2.o tr2.o
 
 VIASOURCE   =  psmprobe.c psmwait.c psminit.c psmsend.c psmrecv.c psmcheck.c \
-	   psmpriv.c psmparam.c \
+	   psmpriv.c psmparam.c viutil.c \
 	   mpid_init.c mpid_recv.c mpid_send.c \
 	   mpid_hsend.c mpid_hrecv.c mpid_pack.c \
 	   cmnargs.c mpid_misc.c shmem_coll.c mpid_smpi.c objtrace.c calltrace.c
 
 VIAOBJECTS  = psmprobe.o psmwait.o psminit.o psmsend.o psmrecv.o psmcheck.o \
-	   psmpriv.o psmparam.o \
+	   psmpriv.o psmparam.o viutil.o \
 	   mpid_init.o mpid_send.o mpid_recv.o \
 	   mpid_hsend.o mpid_hrecv.o mpid_pack.o cmnargs.o \
 	   mpid_misc.o shmem_coll.o mpid_smpi.o \
@@ -131,13 +131,13 @@ $(MPICHSOURCE): setlinks
 # files written from scratch or significantly modified for the psm device (MVICH)
 #
 
-VIAFILES = psmprobe.c psmwait.c psminit.c psmsend.c psmrecv.c psmpriv.c \
+VIAFILES = psmprobe.c psmwait.c psminit.c psmsend.c psmrecv.c psmpriv.c viutil.c \
            psmparam.c \
 	   mpid_init.c mpid_send.c mpid_recv.c psmcheck.c mpid_pack.c \
 	   process/pmgr_client_fork.c process/minidaemon.c process/pmgr_client_mpirun_rsh.c \
 	   process/common_pmgr_collective.c process/client_pmgr_collective.c \
 	   process/mpirun_rsh.c process/mpispawn.c mpid_hsend.c mpid_hrecv.c \
-           req.h psmpriv.h \
+           req.h psmpriv.h viutil.h \
 	   process/pmgr_client.h process/minidaemon.h mpid_misc.c psmparam.h  psmconfig.h psmdev.h \
 	   process/common_pmgr_collective.h process/client_pmgr_collective.h \
 	   cmnargs.c mpid.h process/mpirun_util.c

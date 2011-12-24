@@ -41,6 +41,8 @@ char *cpu_mapping = NULL;
 #endif
 #endif
 
+int               viadev_sleep_on_abort = 0; /* disabled by default */
+
 void viadev_init_parameters()
 {
     char *value;
@@ -64,4 +66,8 @@ void viadev_init_parameters()
     }
 #endif
 #endif
+
+    if ((value = getenv("VIADEV_SLEEP_ON_ABORT")) != NULL) {
+        viadev_sleep_on_abort = atoi(value);
+    }
 }

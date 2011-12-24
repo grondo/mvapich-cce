@@ -31,6 +31,8 @@
 #include "viapacket.h"
 #include "mpid_smpi.h"
 
+int viadev_sleep_on_abort = 0; /* disabled by default */
+
 /* The message size (in bytes) at which we switch from an EAGER
  * protocol to the three-way RENDEZVOUS protocol.
  * In reality, smaller messages might be sent using R3
@@ -54,6 +56,11 @@ char *cpu_mapping = NULL;
 void viadev_init_parameters(int num_proc, int me)
 {
     char *value;
+
+    if ((value = getenv("VIADEV_SLEEP_ON_ABORT")) != NULL) {
+        viadev_sleep_on_abort = atoi(value);
+    }
+
 #ifdef _SMP_
     /* Run parameter to disable shared memory communication */
     if ( (value = getenv("VIADEV_USE_SHARED_MEM")) != NULL ) {

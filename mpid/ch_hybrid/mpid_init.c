@@ -97,9 +97,7 @@ void MPID_Abort(struct MPIR_COMMUNICATOR *comm_ptr,
     /* flip to a negative code for pmgr to indicate a user abort as opposed to a system abort */
     if (code > 0) { code *= -1; }
 
-    pmgr_abort(code, "%s Aborting program %s", user ? user : "",
-            msg ? msg : "!" );
-    exit(code);
+    error_abort_all(code, abortString);
 }
 
 

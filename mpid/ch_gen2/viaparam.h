@@ -159,6 +159,11 @@ extern int                  viadev_use_blocking;
 
 extern uint32_t             viadev_debug_level;
 
+/* enables a process to sleep before calling exit on an abort;
+ * negative values cause an infinite sleep time and positive
+ * values specify the number of seconds to sleep before exiting */
+extern int                  viadev_sleep_on_abort;
+
 extern unsigned int         viadev_multiport;
 extern unsigned int         viadev_multihca;
 extern unsigned int         num_hcas;

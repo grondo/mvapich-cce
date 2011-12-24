@@ -36,18 +36,21 @@
 #define GEN_EXIT_ERR     -1     /* general error which forces us to abort */
 #define GEN_ASSERT_ERR   -2     /* general assert error */
 
-#define error_abort_all(code, message, args...)  {                  \
-    if(NULL == psmdev.my_name) {                                    \
-        fprintf(stderr, "[%d] Abort: ", psmdev.me);                 \
-    } else {                                                        \
-        fprintf(stderr, "[%d:%s] Abort: ", psmdev.me, psmdev.my_name);  \
-    }                                                               \
-    fprintf(stderr, message, ##args);                               \
-    fprintf(stderr, " at line %d in file %s\n", __LINE__, __FILE__);\
-    pmgr_abort(code, message, ##args);                                                   \
-    exit(code);                                                     \
+#define error_abort_all(code, message, args...)  {                     \
+    if(NULL == psmdev.my_name) {                                       \
+        fprintf(stderr, "[%d] Abort: ", psmdev.me);                    \
+    } else {                                                           \
+        fprintf(stderr, "[%d:%s] Abort: ", psmdev.me, psmdev.my_name); \
+    }                                                                  \
+    fprintf(stderr, message, ##args);                                  \
+    fprintf(stderr, ": at line %d in file %s\n", __LINE__, __FILE__);   \
+    fflush(stdout);                                                    \
+    fflush(stderr);                                                    \
+    error_abort_debug();                                               \
+    pmgr_abort(code, message, ##args);                                 \
+    exit(code);                                                        \
 }
 
-
+void error_abort_debug();
 
 #endif                          /* _VIUTIL_H */

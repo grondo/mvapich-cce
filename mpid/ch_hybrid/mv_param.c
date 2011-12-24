@@ -187,6 +187,12 @@ void MV_Init_Params(int num_proc, int me)
     mvparams.xrcshared = 1;
     mvparams.srq_size = 512;
 
+    mvparams.sleep_on_abort = 0;
+
+    if ((value = getenv("MV_SLEEP_ON_ABORT")) != NULL) {
+        mvparams.sleep_on_abort = atoi(value);
+    }
+
     /* Get the appropriate IB device */
     strncpy(mvparams.device_name, MVDEV_INVALID_DEVICE, 32);
 

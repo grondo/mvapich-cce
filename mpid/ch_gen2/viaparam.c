@@ -391,6 +391,8 @@ int               disable_lmc = 1;
 
 uint32_t          viadev_debug_level = DEBUG00; /* No debug prints by default */
 
+int               viadev_sleep_on_abort = 0; /* disabled by default */
+
 unsigned int      viadev_multiport = 0;
 unsigned int      viadev_multihca = 0;
 unsigned int      num_hcas = 0;
@@ -511,6 +513,10 @@ void viadev_init_parameters(int num_proc, int me)
                    "VIADEV_DEBUG_LEVEL wrong value defined -"
                    " %d\n", viadev_debug_level);
         }
+    }
+
+    if ((value = getenv("VIADEV_SLEEP_ON_ABORT")) != NULL) {
+        viadev_sleep_on_abort = atoi(value);
     }
         
     if ((value = getenv("VIADEV_PROGRESS_THRESHOLD")) != NULL) {
