@@ -62,6 +62,11 @@ if [ "x$psm_usempd" != "x" ] ; then
 else
 
     psm_args="$psm_show $psm_xterm $psm_debug"
+    if [ "$debugger" == "totalview" ] ; then
+       # user threw -tv or -totalview on command line, mpirun.args set debugger=totalview,
+       # and now we need to pass -tv on to mpirun_rsh which reads $TOTALVIEW from environment
+       psm_args="$psm_args -tv"
+    fi
     if [ "x$psm_paramfile" != "x" ] ; then
        psm_args="$psm_args -paramfile $psm_paramfile"
     fi
