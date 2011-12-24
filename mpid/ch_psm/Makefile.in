@@ -104,7 +104,7 @@ endif
 
 default_all: default
 
-default: setlinks lib $(MPIRUN) $(IBMGRP) $(PTMALLOC)
+default: setlinks lib $(MPIRUN) $(IBMGRP)
 
 lib: $(VIAOBJECTS) $(MPICHOBJECTS) 
 	$(AR) $(LIBNAME) $?

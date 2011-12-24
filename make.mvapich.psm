@@ -90,6 +90,18 @@ else
     fi
 fi
 
+# PTMALLOC support for MVAPICH2 memory hooks.  Enabling this will allow
+# MVAPICH2 to release memory to the Operating System (when registration
+# cache is enabled).  Enabled by default.  Disable with "no".
+PTMALLOC=${PTMALLOC:-}
+
+if [ "$PTMALLOC" = "no" ]; then
+    PTMALLOC="-DDISABLE_PTMALLOC"
+else
+    PTMALLOC=""
+fi
+
+
 # Set this to override automatic optimization setting (-03).
 OPT_FLAG=${OPT_FLAG:--O3}
 
