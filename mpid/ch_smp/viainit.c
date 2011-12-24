@@ -126,7 +126,9 @@ int MPID_VIA_Init(int *argc, char ***argv, int *size, int *rank)
 
     viadev.processes_buffer = NULL;
     viadev.processes = NULL;
-    gethostname(host, sizeof(host));
+    if (gethostname(host, sizeof(host)) < 0) {
+        error_abort_all(GEN_EXIT_ERR, "gethostname failed");
+    }
     pmgr_allgatherstr(host, &viadev.processes, &viadev.processes_buffer);
 
     *size = viadev.np;

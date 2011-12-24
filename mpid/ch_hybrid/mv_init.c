@@ -361,7 +361,9 @@ int MPID_MV_Init(int *argc, char ***argv, int *size, int *rank)
 
     mvdev.processes_buffer = NULL;
     mvdev.processes = NULL;
-    gethostname(host, sizeof(host));
+    if (gethostname(host, sizeof(host)) < 0) {
+        error_abort_all(GEN_EXIT_ERR, "gethostname failed");
+    }
     pmgr_allgatherstr(host, &mvdev.processes, &mvdev.processes_buffer);
 
     *size = mvdev.np;
