@@ -40,7 +40,9 @@
 #define ENV_CMD		    "/usr/bin/env"
 #define RSH_CMD		    "/usr/bin/rsh"
 #define SSH_CMD		    "/usr/bin/ssh"
+#define  SH_CMD             "/bin/bash"
 #define XTERM		    "/usr/X11R6/bin/xterm"
+#define  SH_ARG             "-c"
 #define SSH_ARG		    "-q"
 #define RSH_ARG		    "NOPARAM"
 

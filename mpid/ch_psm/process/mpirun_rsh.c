@@ -637,11 +637,23 @@ ACCEPT_HID:
     return EXIT_FAILURE;
 }
 
+int remote_host(char *rhost)
+{
+    char lhost[64];
+
+    if (!strcmp(rhost, "localhost") || !strcmp(rhost, "127.0.0.1"))
+        return 0;
+    if (!gethostname(lhost, sizeof(lhost)) && !strcmp(rhost, lhost))
+        return 0;
+    return 1;
+}
+
 int start_process(int i, char *command_name, char *env)
 {
     char * remote_command = NULL;
     char * xterm_command = NULL;
     char * xterm_title = NULL;
+    int use_sh = !remote_host(plist[i].hostname);
     
     int id = getpid();
 
@@ -688,36 +700,56 @@ int start_process(int i, char *command_name, char *env)
             int fd = open("/dev/null", O_RDWR, 0);
             (void) dup2(fd, STDIN_FILENO);
         }
-        if (use_rsh)
-            strcpy(sh_cmd, RSH_CMD);
-        else
-            strcpy(sh_cmd, SSH_CMD);
 
         if (xterm_on) {
             if (show_on) {
-                printf("command: %s -T %s -e %s %s %s %s\n", XTERM,
-                       xterm_title, sh_cmd, use_rsh ? "" : SSH_ARG,
-                       plist[i].hostname, xterm_command);
+                if (use_sh) {
+                    printf("command: %s -T %s -e %s %s \"%s\"\n", XTERM,
+                           xterm_title, SH_CMD, SH_ARG,
+                           xterm_command);
+                } else if (use_rsh) {
+                    printf("command: %s -T %s -e %s %s %s\n", XTERM,
+                           xterm_title, RSH_CMD, plist[i].hostname,
+                           xterm_command);
+                } else { /* ssh */
+                    printf("command: %s -T %s -e %s %s %s %s\n", XTERM,
+                           xterm_title, SSH_CMD, SSH_ARG, plist[i].hostname,
+                           xterm_command);
+                }
             } else {
-                if (use_rsh) {
+                if (use_sh) {
+                     execl(XTERM, XTERM, "-T", xterm_title, "-e",
+                          SH_CMD, SH_ARG, xterm_command, NULL);
+                } else if (use_rsh) {
                     execl(XTERM, XTERM, "-T", xterm_title, "-e",
-                          sh_cmd, plist[i].hostname, xterm_command, NULL);
-                } else {
-                    execl(XTERM, XTERM, "-T", xterm_title, "-e",
-                          sh_cmd, SSH_ARG, plist[i].hostname,
+                          RSH_CMD, plist[i].hostname, xterm_command, NULL);
+                } else { /* ssh */
+                     execl(XTERM, XTERM, "-T", xterm_title, "-e",
+                          SSH_CMD, SSH_ARG, plist[i].hostname,
                           xterm_command, NULL);
                 }
             }
         } else {
             if (show_on) {
-                printf("command: %s %s %s\n", sh_cmd, plist[i].hostname,
-                       remote_command);
+                if (use_sh) {
+                    printf("command: %s %s \"%s\"\n", SH_CMD, SH_ARG,
+                           remote_command);
+                } else if (use_rsh) {
+                    printf("command: %s %s %s\n", RSH_CMD,
+                           plist[i].hostname, remote_command);
+                } else { /* ssh */
+                    printf("command: %s %s %s %s\n", SSH_CMD, SSH_ARG,
+                           plist[i].hostname, remote_command);
+                }
             } else {
-                if (use_rsh) {
-                    execl(sh_cmd, sh_cmd, plist[i].hostname,
+                if (use_sh) {
+                    execl(SH_CMD, SH_CMD, SH_ARG,
                           remote_command, NULL);
-                } else {
-                    execl(sh_cmd, sh_cmd, SSH_ARG, plist[i].hostname,
+                } else if (use_rsh) {
+                    execl(RSH_CMD, RSH_CMD, plist[i].hostname,
+                          remote_command, NULL);
+                } else { /* ssh */
+                    execl(SSH_CMD, SSH_CMD, SSH_ARG, plist[i].hostname,
                           remote_command, NULL);
                 }
             }
