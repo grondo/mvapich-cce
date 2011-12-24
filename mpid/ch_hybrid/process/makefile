@@ -1,7 +1,15 @@
 mpirun_rsh: LDLIBS =  -lm
 CFLAGS = $(MPIRUN_CFLAGS) 
-libmembers = pmgr_collective_client.o pmgr_collective_common.o minidaemon.o \
-	     mpirun_util.o
+libmembers = \
+        pmgr_collective_common.o \
+        pmgr_collective_ranges.o \
+        pmgr_collective_client.o \
+        pmgr_collective_client_common.o \
+        pmgr_collective_client_tree.o \
+        pmgr_collective_client_mpirun.o \
+        pmgr_collective_client_slurm.o \
+        minidaemon.o \
+        mpirun_util.o
 
 all: mpirun_rsh mpispawn minidaemon_client update_lib
 clean:
