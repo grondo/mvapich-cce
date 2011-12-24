@@ -42,6 +42,7 @@ char *cpu_mapping = NULL;
 #endif
 
 int               viadev_sleep_on_abort = 0; /* disabled by default */
+int               viadev_psm_ep_connect_timeout_secs = 300; /* 5 minutes by default */
 
 void viadev_init_parameters()
 {
@@ -69,5 +70,10 @@ void viadev_init_parameters()
 
     if ((value = getenv("VIADEV_SLEEP_ON_ABORT")) != NULL) {
         viadev_sleep_on_abort = atoi(value);
+    }
+
+    /* specify value in seconds */
+    if ((value = getenv("VIADEV_PSM_EP_CONNECT_TIMEOUT_SECS")) != NULL) {
+        viadev_psm_ep_connect_timeout_secs = atoi(value);
     }
 }

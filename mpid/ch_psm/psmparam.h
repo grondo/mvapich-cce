@@ -53,4 +53,7 @@ extern char *cpu_mapping;
  * values specify the number of seconds to sleep before exiting */
 extern int                  viadev_sleep_on_abort;
 
+/* number of seconds for time limit to psm_ep_connect call */
+extern int                  viadev_psm_ep_connect_timeout_secs;
+
 #endif                          /* _PSMPARAM_H */

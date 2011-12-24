@@ -142,8 +142,8 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
     psm_uuid_t uuid; /* an array of 16 bytes */
     psm_epid_t my_epid;
     psm_epid_t *epid_list;
-    uint64_t timeout = 20;
     psm_error_t *errors;
+    uint64_t psm_ep_connect_timeout_nsecs;
     char temp_str[100];
     char temp_str1[100];
     char *buf;
@@ -300,8 +300,9 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
         error_abort_all(GEN_EXIT_ERR, "Malloc error in init.\n");
     }
 
+    psm_ep_connect_timeout_nsecs = viadev_psm_ep_connect_timeout_secs * 1e9;
     if(psm_ep_connect(psmdev.ep, psmdev.np, epid_list, NULL, errors, 
-                      psmdev.epaddrs, timeout)!=PSM_OK)
+                      psmdev.epaddrs, psm_ep_connect_timeout_nsecs)!=PSM_OK)
     {
         error_abort_all(GEN_EXIT_ERR, "Unable to connect the end points");
     }
