@@ -17,6 +17,7 @@
 #include "cm_user.h"
 #include "ib_init.h"
 #include "mpid.h"
+#include <errno.h>
 
 typedef enum CM_conn_state_cli {
     CM_CONN_STATE_C_IDLE,
@@ -1411,7 +1412,7 @@ int MPICM_Connect_UD(uint32_t * qpns, lgid *lgids)
         ah_attr.port_num = viadev_default_port;
         cm_ah[i] = ibv_create_ah(viadev.ptag, &ah_attr);
         if (!cm_ah[i]) {
-            CM_ERR("Failed to create AH");
+            CM_ERR("Failed to create AH, errno=%d", errno);
             return -1;
         }
     }
