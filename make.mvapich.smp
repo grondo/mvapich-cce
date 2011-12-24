@@ -45,8 +45,16 @@ fi
 
 # Whether to enable ROMIO support.  This is necessary if building the
 # F90 modules.
+ROMIO_FS="nfs+ufs"
+if [ -f /usr/include/pan_fs_client_statfs.h ]; then
+    ROMIO_FS="panfs+${ROMIO_FS}"
+fi
+if [ -f /usr/include/lustre/lustre_user.h ]; then
+	ROMIO_FS="lustre+${ROMIO_FS}"
+fi
+
 if [ -n "$F90" ]; then
-    ROMIO="--with-romio"
+    ROMIO="--with-romio --with-file-system=${ROMIO_FS}"
 else
     ROMIO=${ROMIO:---without-romio}
 fi
