@@ -1812,13 +1812,18 @@ void spawn_fast(int argc, char *argv[], char *totalview_cmd, char *env) {
 		argv[arg_offset++] = "-e";
 	    }
 
-	    if(use_rsh) {
+            int use_sh = !remote_host(pglist->data[i].hostname);
+            if (use_sh) {
+                char * sh_cmd = lookup_shell();
+		argv[arg_offset++] = sh_cmd;
+		argv[arg_offset++] = SH_ARG;
+            } else if (use_rsh) {
 		argv[arg_offset++] = RSH_CMD;
-	    }
-
-	    else {
+	        argv[arg_offset++] = pglist->data[i].hostname;
+	    } else {
 		argv[arg_offset++] = SSH_CMD;
 		argv[arg_offset++] = SSH_ARG;
+	        argv[arg_offset++] = pglist->data[i].hostname;
 	    }
         
         if (getpath(pathbuf, PATH_MAX) && file_exists (pathbuf)) {
@@ -1839,7 +1844,6 @@ void spawn_fast(int argc, char *argv[], char *totalview_cmd, char *env) {
 		exit(EXIT_FAILURE);
 	    }
 
-	    argv[arg_offset++] = pglist->data[i].hostname;
 	    argv[arg_offset++] = command;
 	    argv[arg_offset++] = NULL;
 
