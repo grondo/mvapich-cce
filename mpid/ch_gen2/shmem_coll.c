@@ -198,7 +198,7 @@ int MPID_SHMEM_COLL_Mmap()
         for (j=0;j<shmem_coll_blocks;j++){
             shmem_coll_obj.shmem_avail[j] = 1;
         }
-        pthread_spin_init(&shmem_coll->shmem_coll_lock,0);
+        pthread_spin_init(&shmem_coll->shmem_coll_lock, PTHREAD_PROCESS_SHARED);
     }
     
 
