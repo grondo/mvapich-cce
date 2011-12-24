@@ -1150,6 +1150,19 @@ static int knomial_2level_Bcast(
     leader_of_root = comm_ptr->leader_map[root];
     leader_root = comm_ptr->leader_rank[leader_of_root];
 
+    /* We may need to allocate a temporary buffer on root to receive data.
+     * This is necessary because the root may be sending from a read-only
+     * page of memory, but the algorithm below forwards the data from
+     * the real root to a pre-defined root (if they are not the same),
+     * and then all processes (including the real root) receive data from
+     * this pre-defined root.  This is problem because we are writing to
+     * the send buffer on the root, which is not allowed by the MPI standard.
+     * To solve this, we allocate a temporary buffer on the real root,
+     * receive into that instead, and then just discard it. */
+
+    /* pointer to temporary buffer on root */
+    void* buffer_tmp = NULL;
+
     /* Send the message to the local leader if the root is not the
      * local leader  */
     if (local_size > 1){
@@ -1164,6 +1177,19 @@ static int knomial_2level_Bcast(
             mpi_errno  = MPI_Send( buffer, count, datatype->self, 
                                    leader_of_root, MPIR_BCAST_TAG, 
                                    comm_ptr->self);
+
+            /* get extent of datatype */
+            MPI_Aint lb, ub;
+            MPIR_Type_get_limits( datatype, &lb, &ub );
+            MPI_Aint m_extent = ub - lb;
+
+            /* allocate a temporary buffer to receive the data below, size = extent * count */
+            MPIR_ALLOC(buffer_tmp,(void *)MALLOC(m_extent * count),comm, MPI_ERR_EXHAUSTED,
+                       "MPI_BCAST" );
+
+            /* set our buffer to point to this temporary buffer,
+             * adjusting for any lower bound */
+            buffer = (void*) ((char*)buffer_tmp - lb);
         }
     }
 
@@ -1180,6 +1206,12 @@ static int knomial_2level_Bcast(
     if(local_size>1)
         mpi_errno = intra_shmem_Bcast (buffer, count, datatype,
                                        shmem_commptr);
+
+    /* if we allocated a temporary buffer, now we can free it */
+    if (buffer_tmp != NULL) {
+      FREE(buffer_tmp);
+      buffer_tmp = NULL;
+    }
 
     return mpi_errno;
 }
