@@ -1588,6 +1588,11 @@ MPID_SMP_Eagerb_recv_short (MPIR_RHANDLE * rhandle,
     rhandle->s.MPI_TAG = pkt->tag;
     rhandle->s.MPI_SOURCE = pkt->lrank;
 
+    /* do not overflow the receive buffer if the message is too big */
+    if (msglen > rhandle->len) {
+        msglen = rhandle->len;
+        err = MPI_ERR_TRUNCATE;
+    }
 
     if (msglen > 0) {
         memcpy (rhandle->buf,
@@ -1733,6 +1738,13 @@ MPID_SMP_Eagerb_unxrecv_start_short (MPIR_RHANDLE * rhandle,
 {
     int msglen, err = 0;
     msglen = runex->s.count;
+
+    /* do not overflow the receive buffer if the message is too big */
+    if (msglen > rhandle->len) {
+        msglen = rhandle->len;
+        err = MPI_ERR_TRUNCATE;
+    }
+
     if (msglen > 0) {
         memcpy (rhandle->buf, runex->buf, msglen);
     }
