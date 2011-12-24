@@ -3434,6 +3434,8 @@ static int intra_Allgatherv (
               recv_offset = 0;
               for (j=0; j<dst_tree_root; j++)
                   recv_offset += recvcounts[j];
+              /* given the limit of tmp_buf, determine the max number of items we can receieve */
+              int max_recv_count = total_count - recv_offset;
               recv_offset *= recvtype_extent;
               
               if (dst < size) {
@@ -3441,7 +3443,7 @@ static int intra_Allgatherv (
                                            curr_cnt, recvtype->self,
                                            dst, MPIR_ALLGATHERV_TAG,  
                                            ((char *)tmp_buf + recv_offset),
-                                           total_count, recvtype->self, dst,
+                                           max_recv_count, recvtype->self, dst,
                                            MPIR_ALLGATHERV_TAG,
                                            comm->self, &status); 
                   /* for convenience, recv is posted for a bigger amount
