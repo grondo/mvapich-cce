@@ -94,7 +94,7 @@ OPT_FLAG=${OPT_FLAG:--O3}
 export LIBS=${LIBS:--L${IBHOME_LIB} -lpthread -lpsm_infinipath}
 export CFLAGS=${CFLAGS:--D${ARCH} ${COMPILER_FLAG} -D_SMP_ -DCH_PSM -I${IBHOME}/include $OPT_FLAG}
 
-export MPIRUN_CFLAGS="${MPIRUN_CFLAGS} -DLD_LIBRARY_PATH_MPI=\\\"${PREFIX}/lib/shared\\\" -DPARAM_GLOBAL=\\\"${PREFIX}/etc/mvapich.conf\\\""
+export MPIRUN_CFLAGS="${MPIRUN_CFLAGS} ${OPT_FLAG} -DLD_LIBRARY_PATH_MPI=\\\"${PREFIX}/lib/shared\\\" -DPARAM_GLOBAL=\\\"${PREFIX}/etc/mvapich.conf\\\""
 
 # Prelogue
 make distclean &>/dev/null

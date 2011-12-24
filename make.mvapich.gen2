@@ -108,7 +108,7 @@ else
         echo no
 fi
 
-export MPIRUN_CFLAGS="${MPIRUN_CFLAGS} -DLD_LIBRARY_PATH_MPI=\\\"${PREFIX}/lib/shared\\\" -DMPI_PREFIX=\\\"${PREFIX}/\\\" -DPARAM_GLOBAL=\\\"${PREFIX}/etc/mvapich.conf\\\""
+export MPIRUN_CFLAGS="${MPIRUN_CFLAGS} ${OPT_FLAG} -DLD_LIBRARY_PATH_MPI=\\\"${PREFIX}/lib/shared\\\" -DMPI_PREFIX=\\\"${PREFIX}/\\\" -DPARAM_GLOBAL=\\\"${PREFIX}/etc/mvapich.conf\\\""
 
 # Prelogue
 make distclean &>/dev/null
