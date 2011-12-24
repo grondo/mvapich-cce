@@ -516,7 +516,8 @@ typedef struct {
     struct ibv_comp_channel *comp_channel;
 
     int *pids;                    /* add for totalview */
-    char **processes;
+    char *processes_buffer; /* char array which holds hostnames */
+    char **processes;       /* array which indexes into processes_buffer */
     char execname[VIADEV_MAX_EXECNAME]; /* add for totalview */
 
     struct ibv_recv_wr *array_recv_desc;

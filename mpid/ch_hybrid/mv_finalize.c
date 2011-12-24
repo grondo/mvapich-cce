@@ -151,6 +151,8 @@ void MPID_MV_Finalize(void)
         ibv_close_device(mvdev.hca[i].context);
     }
 
+    free(mvdev.processes);
+    free(mvdev.processes_buffer);
     free(mvdev.hca);
     free(mvdev.lids);
     free(mvdev.qpns);

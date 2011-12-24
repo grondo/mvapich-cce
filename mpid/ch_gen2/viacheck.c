@@ -343,7 +343,10 @@ int MPID_DeviceCheck(MPID_BLOCKING_TYPE blocking)
         /* Chek if it was fatal */
         if (VIADEV_UNLIKELY(1 == viadev_use_nfr && FATAL == nfr_fatal_error)) {
             if (nfr_restart_hca() < 0) {
-                error_abort_all(((vbuf *) vbuf_addr)->grank, "Failed restore connection");
+                int dest_rank = ((vbuf *) vbuf_addr)->grank;
+                error_abort_all(GEN_EXIT_ERR,
+                                "Failed restore connection to [%d:%s]",
+                                dest_rank, viadev.processes[dest_rank]);
             }
             return MPI_SUCCESS;
         }
@@ -354,12 +357,12 @@ int MPID_DeviceCheck(MPID_BLOCKING_TYPE blocking)
             if (ret2 == 1) {
                 vbuf_addr = (void *) ((aint_t) sc.wr_id);
                 if (sc.status != IBV_WC_SUCCESS) {
-                    error_abort_all(((vbuf *) vbuf_addr)->grank,
-                                    "[%s:%d] Got completion with error %s, "
-                                    "code=%d, dest rank=%d\n",
-                                    viadev.my_name, viadev.me,
+                    int dest_rank = ((vbuf *) vbuf_addr)->grank;
+                    error_abort_all(IBV_RETURN_ERR,
+                                    "Got completion with error %s, "
+                                    "code=%d, dest [%d:%s]",
                                     wc_code_to_str(sc.status), sc.status,
-                                    ((vbuf *) vbuf_addr)->grank);
+                                    dest_rank, viadev.processes[dest_rank]);
 
                 }
                 viadev_process_msend(vbuf_addr);
@@ -369,12 +372,13 @@ int MPID_DeviceCheck(MPID_BLOCKING_TYPE blocking)
             if (ret3 == 1) {
                 vbuf_addr = (void *) ((aint_t) sc.wr_id);
                 if (sc.status != IBV_WC_SUCCESS) {
-                    error_abort_all(((vbuf *) vbuf_addr)->grank,
-                                    "[%s:%d] Got completion with error %s, "
-                                    "code=%d, dest rank=%d\n",
-                                    viadev.my_name, viadev.me,
+                    int dest_rank = ((vbuf *) vbuf_addr)->grank;
+                    error_abort_all(IBV_RETURN_ERR,
+                                    "Got completion with error %s, "
+                                    "code=%d, dest [%d:%s]",
+                                    viadev.processes[viadev.me], viadev.me,
                                     wc_code_to_str(sc.status), sc.status,
-                                    ((vbuf *) vbuf_addr)->grank);
+                                    dest_rank, viadev.processes[dest_rank]);
                 }
                 co_print("ud_pkt recvd \n");
                 viadev_process_mrecv(vbuf_addr);
@@ -395,10 +399,14 @@ int MPID_DeviceCheck(MPID_BLOCKING_TYPE blocking)
 
         ne = ibv_poll_cq(viadev.cq_hndl, 1, &sc);
         if (ne < 0) {
-            error_abort_all(IBV_RETURN_ERR, "Error polling CQ\n");
+            error_abort_all(IBV_RETURN_ERR,
+                            "Error polling CQ (ibv_poll_cq() returned %d)",
+                            ne);
         } else if (ne > 1) {
-            error_abort_all(IBV_RETURN_ERR, "Asked only one completion, "
-                            "got more!\n");
+            error_abort_all(IBV_RETURN_ERR,
+                            "Asked only one completion, "
+                            "got more (ibv_poll_cq() returned %d)",
+                            ne);
         } else if (1 == ne) {
 #ifdef MCST_SUPPORT
             if (sc.wr_id == -1) {
@@ -414,21 +422,24 @@ int MPID_DeviceCheck(MPID_BLOCKING_TYPE blocking)
 
                 /* Need to check if it is a completion with error */
                 if (sc.status != IBV_WC_SUCCESS) {
+                    int dest_rank = ((vbuf *) vbuf_addr)->grank;
                     if (!viadev_use_nfr) {
-                        error_abort_all(((vbuf *) vbuf_addr)->grank,
-                                "[%s:%d] Got completion with error %s, "
-                                "code=%d, dest rank=%d\n",
-                                viadev.my_name, viadev.me,
+                        error_abort_all(IBV_RETURN_ERR,
+                                "Got completion with error %s, "
+                                "code=%d, dest [%d:%s]",
                                 wc_code_to_str(sc.status), sc.status,
-                                ((vbuf *) vbuf_addr)->grank);
+                                dest_rank, viadev.processes[dest_rank]);
                     } else {
-                        NFR_PRINT("[%s:%d] Got completion with error %s, "
-                                "code=%d, dest rank=%d, qp_num %x - Starting Network Recovery process",
-                                viadev.my_name, viadev.me,
+                        NFR_PRINT("[%d:%s] Got completion with error %s, "
+                                "code=%d, dest [%d:%s], qp_num %x - Starting Network Recovery process",
+                                viadev.me, viadev.processes[viadev.me],
                                 wc_code_to_str(sc.status), sc.status,
-                                ((vbuf *) vbuf_addr)->grank, sc.qp_num);
+                                dest_rank, viadev.processes[dest_rank],
+                                sc.qp_num);
                         if (nfr_process_qp_error(&sc) < 0) {
-                            error_abort_all(((vbuf *) vbuf_addr)->grank, "Failed restore connection");
+                            error_abort_all(GEN_EXIT_ERR,
+                                            "Failed restore connection to [%d:%s]",
+                                            dest_rank, viadev.processes[dest_rank]);
                         }
                         return MPI_SUCCESS;
                     }
@@ -1659,12 +1670,12 @@ void viadev_incoming_rendezvous_start(vbuf * v, viadev_connection_t * c,
             break;
         case VIADEV_PROTOCOL_RENDEZVOUS_UNSPECIFIED:
             error_abort_all(IBV_STATUS_ERR,
-                            "VIRS: unspecified protocol %d\n",
+                            "VIRS: unspecified protocol %d",
                             rhandle->protocol);
             break;
         default:
             error_abort_all(IBV_STATUS_ERR,
-                            "VIRS: invalid protocol %d\n",
+                            "VIRS: invalid protocol %d",
                             rhandle->protocol);
         }
     }
@@ -1699,7 +1710,7 @@ void viadev_incoming_eager_coalesce(vbuf * v, viadev_connection_t * c,
             data_ptr = data_ptr + sizeof(*fh);
         } else {
             error_abort_all(IBV_STATUS_ERR, 
-                "Unknown cached val: %d\n", ph->coalesce_type);
+                "Unknown cached val: %d", ph->coalesce_type);
         }
 
         /* now see if the recv is posted */
@@ -2537,8 +2548,8 @@ static void viutil_spinandwaitcq(struct ibv_wc *sc)
                     spin_count++;
                 } else if (ne < 0) {
                     error_abort_all(IBV_RETURN_ERR,
-                            "[%s:%d] Got error polling CQ\n",
-                            viadev.my_name, viadev.me);
+                            "Got error polling CQ (ibv_poll_cq() returned %d)",
+                            ne);
                 } else {
                     break;
                 }
@@ -2555,19 +2566,19 @@ static void viutil_spinandwaitcq(struct ibv_wc *sc)
                     int ret = ibv_get_cq_event(viadev.comp_channel, &ev_cq, &ev_ctx);
                     if (ret && errno != EINTR) {
                         error_abort_all(IBV_RETURN_ERR,
-                                "Failed to get cq event: %d\n", ret);
+                                "Failed to get cq event (ibv_get_cq_event() returned %d)", ret);
                     }
                 } while (ret && errno == EINTR);
 
                 if (ev_cq != viadev.cq_hndl) {
-                    error_abort_all(GEN_ASSERT_ERR, "Event in unknown CQ\n");
+                    error_abort_all(GEN_ASSERT_ERR, "Event in unknown CQ");
                 }
 
                 ibv_ack_cq_events(viadev.cq_hndl, 1);
 
                 if (ibv_req_notify_cq(viadev.cq_hndl, 0)) {
                     error_abort_all(IBV_RETURN_ERR,
-                            "Couldn't request for CQ notification\n");
+                            "Couldn't request for CQ notification (ibv_req_notify_cq() returned 0)");
                 }
 
                 ne = ibv_poll_cq(viadev.cq_hndl, 1, sc);
@@ -2579,22 +2590,25 @@ static void viutil_spinandwaitcq(struct ibv_wc *sc)
         if (ne > 0) {
             void * vbuf_addr = (void *) ((aint_t) sc->wr_id);
             if (sc->status != IBV_WC_SUCCESS) {
+                int dest_rank = ((vbuf *) vbuf_addr)->grank;
                 if (!viadev_use_nfr) {
-                    error_abort_all(((vbuf *) vbuf_addr)->grank,
-                            "[%s:%d] Got completion with error %s, "
-                            "code=%d, dest rank=%d\n",
-                            viadev.my_name, viadev.me,
+                    error_abort_all(IBV_RETURN_ERR,
+                            "Got completion with error %s, "
+                            "code=%d, dest [%d:%s]",
                             wc_code_to_str(sc->status), sc->status,
-                            ((vbuf *) vbuf_addr)->grank);
+                            dest_rank, viadev.processes[dest_rank]);
                 } else {
-                    NFR_PRINT("[%s:%d] Got completion with error %s, "
-                            "code=%d, dest rank=%d qp=%x - Starting Network Recovery process\n",
-                            viadev.my_name, viadev.me,
+                    NFR_PRINT("[%d:%s] Got completion with error %s, "
+                            "code=%d, dest [%d:%s] qp=%x - Starting Network Recovery process\n",
+                            viadev.me, viadev.my_name,
                             wc_code_to_str(sc->status), sc->status,
-                            ((vbuf *) vbuf_addr)->grank, sc->qp_num);
+                            dest_rank, viadev.processes[dest_rank],
+                            sc->qp_num);
                     fflush(stderr);
                     if (nfr_process_qp_error(sc) < 0) {
-                        error_abort_all(((vbuf *) vbuf_addr)->grank, "Failed restore connection");
+                        error_abort_all(GEN_ASSERT_ERR,
+                                        "Failed restore connection to [%d:%s]",
+                                        dest_rank, viadev.processes[dest_rank]);
                     }
                     /* reset */
                     sc->wr_id = 0;
@@ -2605,18 +2619,16 @@ static void viutil_spinandwaitcq(struct ibv_wc *sc)
 
             break;
         } else if (ne < 0) {
-
             error_abort_all(IBV_RETURN_ERR,
-                            "[%s:%d] Got error polling CQ\n",
-                            viadev.my_name, viadev.me);
+                            "Got error polling CQ (ibv_poll_cq() returned %d)",
+                            ne);
         }
 
         if (ret == 1)
             continue;
         /* error when comes here */
         error_abort_all(GEN_ASSERT_ERR,
-                        "[%s:%d] Error in (%s:%d): ret=%d\n",
-                        viadev.my_name, viadev.me, __FILE__, __LINE__,
+                        "Error ret=%d",
                         ret);
         break;
     }
@@ -2744,7 +2756,7 @@ static void process_srq_limit_event()
 
     if (ibv_modify_srq(viadev.srq_hndl, &srq_attr, IBV_SRQ_LIMIT)) {
         error_abort_all(GEN_EXIT_ERR,
-                "Couldn't modify SRQ limit (%u) after posting %d\n",
+                "Couldn't modify SRQ limit (%u) after posting %d",
                 viadev_srq_limit, post_new);
     }
 
@@ -2850,7 +2862,7 @@ int perform_manual_apm(struct ibv_qp* qp)
 
     if(ibv_query_qp(qp, &attr,
                 attr_mask, &init_attr)) {
-        error_abort_all(GEN_EXIT_ERR, "Failed to query QP\n");
+        error_abort_all(GEN_EXIT_ERR, "Failed to query QP");
     }
     
     if((attr.path_mig_state == IBV_MIG_ARMED)) {
@@ -2876,7 +2888,7 @@ int reload_alternate_path(struct ibv_qp *qp)
     
     if (ibv_query_qp(qp, &attr,
                 attr_mask, &init_attr)) {
-        error_abort_all(GEN_EXIT_ERR, "Failed to query QP\n");
+        error_abort_all(GEN_EXIT_ERR, "Failed to query QP");
     }   
     
     /* This value should change with enabling of QoS */
@@ -2906,7 +2918,7 @@ int reload_alternate_path(struct ibv_qp *qp)
     attr_mask |= IBV_QP_PATH_MIG_STATE;
 
     if (ibv_modify_qp(qp, &attr, attr_mask)) {
-        error_abort_all(GEN_EXIT_ERR, "Failed to modify QP\n");
+        error_abort_all(GEN_EXIT_ERR, "Failed to modify QP");
     }
 
     unlock_apm();

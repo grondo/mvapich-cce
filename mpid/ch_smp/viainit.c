@@ -123,8 +123,11 @@ int MPID_VIA_Init(int *argc, char ***argv, int *size, int *rank)
         error_abort_all(GEN_EXIT_ERR, "pmgr_client_init failed");
     }   
     pmgr_open();
+
+    viadev.processes_buffer = NULL;
+    viadev.processes = NULL;
     gethostname(host, sizeof(host));
-    pmgr_allgatherstr(host, &viadev.processes, &buf);
+    pmgr_allgatherstr(host, &viadev.processes, &viadev.processes_buffer);
 
     *size = viadev.np;
     *rank = viadev.me;
@@ -261,6 +264,9 @@ void MPID_VIA_Finalize(void)
     }
     if (viadev.processes) {
         free(viadev.processes);
+    }
+    if (viadev.processes_buffer) {
+        free(viadev.processes_buffer);
     }
 #ifdef _SMP_
     if (smpi.local_nodes) {

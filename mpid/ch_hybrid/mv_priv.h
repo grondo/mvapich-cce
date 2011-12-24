@@ -570,7 +570,8 @@ typedef struct {
     struct ibv_mr * grh_mr[MAX_NUM_HCAS];
 
     int *pids;                    /* add for totalview */
-    char **processes;
+    char *processes_buffer;       /* char array which holds hostnames */
+    char **processes;             /* array which indexes into processes_buffer */
     char execname[256];           /* add for totalview */
 
     uint64_t total_recv_buf;

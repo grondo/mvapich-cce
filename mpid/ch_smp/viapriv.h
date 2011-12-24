@@ -192,7 +192,8 @@ typedef struct {
     /* Used for VIA barrier operations */
 
     int *pids;                    /* add for totalview */
-    char **processes;
+    char *processes_buffer; /* char array which holds hostnames */
+    char **processes;       /* array which indexes into processes_buffer */
     char execname[VIADEV_MAX_EXECNAME];           /* add for totalview */
 
     char device_name[32];         /* Name of the IB device */

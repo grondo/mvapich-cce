@@ -358,8 +358,10 @@ int MPID_MV_Init(int *argc, char ***argv, int *size, int *rank)
     }   
     pmgr_open();
 
+    mvdev.processes_buffer = NULL;
+    mvdev.processes = NULL;
     gethostname(host, sizeof(host));
-    pmgr_allgatherstr(host, &mvdev.processes, &buf);
+    pmgr_allgatherstr(host, &mvdev.processes, &mvdev.processes_buffer);
 
     *size = mvdev.np;
     *rank = mvdev.me;

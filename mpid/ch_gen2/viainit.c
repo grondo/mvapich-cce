@@ -780,9 +780,11 @@ int MPID_VIA_Init(int *argc, char ***argv, int *size, int *rank)
     }
 
     pmgr_open();
-    char host[256], *buf;
+    viadev.processes_buffer = NULL;
+    viadev.processes = NULL;
+    char host[256];
     gethostname(host, sizeof(host));
-    pmgr_allgatherstr(host, &viadev.processes, &buf);
+    pmgr_allgatherstr(host, &viadev.processes, &viadev.processes_buffer);
 
     *size = viadev.np;
     *rank = viadev.me;
@@ -1116,6 +1118,9 @@ void MPID_VIA_Finalize(void)
     }
     if (viadev.processes) {
         free(viadev.processes);
+    }
+    if (viadev.processes_buffer) {
+        free(viadev.processes_buffer);
     }
 #ifdef _SMP_
     if(!disable_shared_mem) {
