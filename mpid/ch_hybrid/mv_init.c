@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/resource.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -366,6 +367,12 @@ int MPID_MV_Init(int *argc, char ***argv, int *size, int *rank)
     *size = mvdev.np;
     *rank = mvdev.me;
     strcpy(mvdev.execname, ((const char **) (*argv))[0]);
+
+    /* for IB systems, increase our memlock limit */
+    struct rlimit rl;
+    getrlimit(RLIMIT_MEMLOCK, &rl);
+    rl.rlim_cur = rl.rlim_max;
+    setrlimit(RLIMIT_MEMLOCK, &rl);
 
     AUX_Get_Hostname();
     MV_Init_Params(mvdev.np, mvdev.me);

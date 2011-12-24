@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/resource.h>
 
 #include "process/pmgr_collective_client.h"
 #include "viadev.h"
@@ -788,6 +789,12 @@ int MPID_VIA_Init(int *argc, char ***argv, int *size, int *rank)
 
     *size = viadev.np;
     *rank = viadev.me;
+
+    /* for IB systems, increase our memlock limit */
+    struct rlimit rl;
+    getrlimit(RLIMIT_MEMLOCK, &rl);
+    rl.rlim_cur = rl.rlim_max;
+    setrlimit(RLIMIT_MEMLOCK, &rl);
 
     if(NULL != argv) {
         strncpy(viadev.execname, 

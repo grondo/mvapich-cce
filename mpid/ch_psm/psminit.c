@@ -46,6 +46,7 @@
 #include "process/pmgr_collective_client.h"
 #include "mpid_smpi.h"
 #include "infinipath_header.h"
+#include <sys/resource.h>
 
 #define HOSTNAME_LEN                          (255)
 
@@ -158,6 +159,12 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
 
     *size = psmdev.np;
     *rank = psmdev.me;
+
+    /* for IB systems, increase our memlock limit */
+    struct rlimit rl;
+    getrlimit(RLIMIT_MEMLOCK, &rl);
+    rl.rlim_cur = rl.rlim_max;
+    setrlimit(RLIMIT_MEMLOCK, &rl);
 
     if(NULL != argv) {
         strncpy(psmdev.execname, 
