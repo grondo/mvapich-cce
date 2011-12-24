@@ -35,8 +35,8 @@
 
 #ifdef _SMP_
 #ifdef _AFFINITY_
-/* Affinity is enabled by default */
-unsigned int viadev_enable_affinity=1;
+/* Affinity is disabled by default */
+unsigned int viadev_enable_affinity=0;
 char *cpu_mapping = NULL;
 #endif
 #endif

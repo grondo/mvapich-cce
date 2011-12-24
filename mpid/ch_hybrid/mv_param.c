@@ -30,7 +30,7 @@ mvdev_param_info mvparams;
     int smp_num_send_buffer = SMP_NUM_SEND_BUFFER;
     int smp_batch_size = SMP_BATCH_SIZE;
 #ifdef _AFFINITY_
-    unsigned int viadev_enable_affinity = 1;
+    unsigned int viadev_enable_affinity = 0;
     char *cpu_mapping = NULL;
 #endif
 #endif

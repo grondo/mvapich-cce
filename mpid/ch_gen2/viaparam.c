@@ -337,8 +337,8 @@ int disable_shared_mem = 0;
 int smp_num_send_buffer = SMP_NUM_SEND_BUFFER;
 int smp_batch_size = SMP_BATCH_SIZE;
 #ifdef _AFFINITY_
-/* Affinity is enabled by default */
-unsigned int viadev_enable_affinity=1;
+/* Affinity is disabled by default */
+unsigned int viadev_enable_affinity=0;
 char *cpu_mapping = NULL;
 #endif 
 #endif
