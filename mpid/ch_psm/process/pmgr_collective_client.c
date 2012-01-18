@@ -65,18 +65,18 @@
 
 /* total time to wait to get through pmgr_open */
 #ifndef MPIRUN_OPEN_TIMEOUT
-#define MPIRUN_OPEN_TIMEOUT (5*60) /* seconds */
+#define MPIRUN_OPEN_TIMEOUT (10*60) /* seconds, total time to wait to get through pmgr_open() */
 #endif
 
 /* set env variable to configure socket timeout parameters */
 #ifndef MPIRUN_CONNECT_TRIES
-#define MPIRUN_CONNECT_TRIES (7)
+#define MPIRUN_CONNECT_TRIES (10)   /* number of times to attempt to connect to IP:port before giving up */
 #endif
 #ifndef MPIRUN_CONNECT_TIMEOUT
-#define MPIRUN_CONNECT_TIMEOUT (2) /* seconds */
+#define MPIRUN_CONNECT_TIMEOUT (60) /* seconds, we only apply this when we know the IP:port is correct, so it can be high */
 #endif
 #ifndef MPIRUN_CONNECT_BACKOFF
-#define MPIRUN_CONNECT_BACKOFF (5) /* seconds */
+#define MPIRUN_CONNECT_BACKOFF (5) /* seconds, max amount of time to sleep before trying to connect again */
 #endif
 #ifndef MPIRUN_CONNECT_RANDOM
 #define MPIRUN_CONNECT_RANDOM (1) /* enable/disable randomized option for backoff */
@@ -86,11 +86,11 @@
 #define MPIRUN_CONNECT_DOWN (0) /* whether to connect tree from parent to children (down) or children to parent (up) */
 #endif
 
-#ifndef MPIRUN_PORT_SCAN_TIMEOUT      /* total time we'll try to connect to a host before throwing a fatal error */
-#define MPIRUN_PORT_SCAN_TIMEOUT (60) /* seconds */
+#ifndef MPIRUN_PORT_SCAN_TIMEOUT         /* total time we'll try to connect to a host before throwing a fatal error */
+#define MPIRUN_PORT_SCAN_TIMEOUT (10*60) /* seconds */
 #endif
-#ifndef MPIRUN_PORT_SCAN_CONNECT_TIMEOUT       /* time to wait before giving up on connect call */
-#define MPIRUN_PORT_SCAN_CONNECT_TIMEOUT (100) /* millisecs */
+#ifndef MPIRUN_PORT_SCAN_CONNECT_TIMEOUT         /* time to wait before giving up on connect call */
+#define MPIRUN_PORT_SCAN_CONNECT_TIMEOUT (10000) /* millisecs */
 #endif
 #ifndef MPIRUN_PORT_SCAN_CONNECT_ATTEMPTS     /* number of consecutive times to try a given port */
 #define MPIRUN_PORT_SCAN_CONNECT_ATTEMPTS (1) /* seconds */
@@ -101,8 +101,8 @@
 #ifndef MPIRUN_AUTHENTICATE_ENABLE
 #define MPIRUN_AUTHENTICATE_ENABLE (1)
 #endif
-#ifndef MPIRUN_AUTHENTICATE_TIMEOUT        /* time to wait for read to complete after making connection */
-#define MPIRUN_AUTHENTICATE_TIMEOUT (5000) /* milliseconds */
+#ifndef MPIRUN_AUTHENTICATE_TIMEOUT         /* time to wait for read to complete after making connection */
+#define MPIRUN_AUTHENTICATE_TIMEOUT (60000) /* milliseconds */
 #endif
 
 /* set env variable whether to use trees */
@@ -115,6 +115,7 @@
 #define MPIRUN_PMI_ENABLE (0)
 #endif
 
+/* whether to use shared memory so that only one proc per node must do network communication */
 #ifndef MPIRUN_SHM_ENABLE
 #define MPIRUN_SHM_ENABLE (1)
 #endif
@@ -1108,8 +1109,8 @@ int pmgr_abort(int code, const char *fmt, ...)
     vprint_msg(buf, sizeof(buf), fmt, ap);
     va_end(ap);
 
-    /* check whether we have an mpirun process */
-    if (mpirun_hostname != NULL && !mpirun_pmi_enable) {
+    /* check whether we have an mpirun process, and check whether we can connect back to it */
+    if (mpirun_hostname != NULL && !mpirun_pmi_enable && !(mpirun_shm_enable && pmgr_nprocs >= mpirun_shm_threshold)) {
         he = gethostbyname(mpirun_hostname);
         if (!he) {
             pmgr_error("pmgr_abort: Hostname lookup of mpirun failed (gethostbyname(%s) %s h_errno=%d) @ file %s:%d",

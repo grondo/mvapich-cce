@@ -53,11 +53,13 @@ extern struct timeval time_open;
 /* check whether we've exceed the time since open */
 int pmgr_have_exceeded_open_timeout()
 {
-    struct timeval time_current;
-    pmgr_gettimeofday(&time_current);
-    double time_since_open =  pmgr_getsecs(&time_current, &time_open);
-    if (time_since_open > (double) mpirun_open_timeout) {
-        return 1;
+    if (mpirun_open_timeout >= 0) {
+        struct timeval time_current;
+        pmgr_gettimeofday(&time_current);
+        double time_since_open =  pmgr_getsecs(&time_current, &time_open);
+        if (time_since_open > (double) mpirun_open_timeout) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -99,7 +101,7 @@ int pmgr_connect_timeout_suppress(int fd, struct sockaddr_in* addr, int millisec
     int err = 0;
     int rc = connect(fd, (struct sockaddr *) addr, sizeof(struct sockaddr_in));
     if (rc < 0 && errno != EINPROGRESS) {
-        pmgr_debug(suppress, "Nonblocking connect failed immediately connecting to %s:%d (connect() %m errno=%d) @ file %s:%d",
+        pmgr_error("Nonblocking connect failed immediately connecting to %s:%d (connect() %m errno=%d) @ file %s:%d",
             inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno, __FILE__, __LINE__
         );
         return -1;
@@ -120,14 +122,16 @@ again:	rc = poll(&ufds, 1, millisec);
             /* NOTE: connect() is non-interruptible in Linux */
             goto again;
         } else {
-            pmgr_debug(suppress, "Failed to poll connection connecting to %s:%d (poll() %m errno=%d) @ file %s:%d",
+            pmgr_error("Failed to poll connection connecting to %s:%d (poll() %m errno=%d) @ file %s:%d",
                 inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno, __FILE__, __LINE__
             );
         }
         return -1;
     } else if (rc == 0) {
         /* poll timed out before any socket events */
-        /* perror("pmgr_connect_w_timeout poll timeout"); */
+        pmgr_debug(suppress, "Timedout %d millisec @ file %s:%d",
+            millisec, __FILE__, __LINE__
+        );
         return -1;
     } else {
         /* poll saw some event on the socket
@@ -136,7 +140,7 @@ again:	rc = poll(&ufds, 1, millisec);
          * POLLERR when the connection fails! */
         socklen_t err_len = (socklen_t) sizeof(err);
         if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len) < 0) {
-            pmgr_debug(suppress, "Failed to read event on socket connecting to %s:%d (getsockopt() %m errno=%d) @ file %s:%d",
+            pmgr_error("Failed to read event on socket connecting to %s:%d (getsockopt() %m errno=%d) @ file %s:%d",
                 inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno, __FILE__, __LINE__
             );
             return -1; /* solaris pending error */
@@ -150,7 +154,8 @@ done:
      * non-responsive nodes plus attempts to communicate
      * with terminated launcher. */
     if (err) {
-        pmgr_debug(suppress, "Error on socket in pmgr_connect_w_timeout() connecting to %s:%d (getsockopt() set err=%d) @ file %s:%d",
+        errno=err;
+        pmgr_debug(suppress, "Error on socket in pmgr_connect_w_timeout() connecting to %s:%d (getsockopt() set err=%d %m) @ file %s:%d",
             inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), err, __FILE__, __LINE__
         );
         return -1;
@@ -188,7 +193,13 @@ int pmgr_connect_retry(struct in_addr ip, int port, int timeout_millisec, int at
         if (pmgr_connect_timeout_suppress(sockfd, &sockaddr, timeout_millisec, suppress) < 0) {
             if (attempts > 1) {
                 close(sockfd);
-                usleep(sleep_usecs);
+                if (mpirun_connect_random) {
+                  double percentage = ((double)rand_r(&pmgr_backoff_rand_seed)) / ((double)RAND_MAX);
+                  useconds_t usecs = (useconds_t)(percentage * sleep_usecs);
+                  usleep(usecs);
+                } else {
+                  usleep(sleep_usecs);
+                }
             }
         } else {
             connected = 1;
@@ -695,6 +706,11 @@ int pmgr_connect_hostname(
     int reply_timeout = mpirun_authenticate_timeout;
     int suppress      = 3;
 
+    /* allow our timeouts to increase dynamically,
+     * arbitrarily pick 100x the base as the range */
+    //int max_timeout       = timeout * 128;
+    int max_timeout       = timeout * 1;
+
     /* lookup host address by name */
     struct hostent* he = gethostbyname(hostname);
     if (!he) {
@@ -721,7 +737,7 @@ int pmgr_connect_hostname(
     pmgr_gettimeofday(&start);
     double secs = 0;
     int connected = 0;
-    while (!connected && secs < timelimit) {
+    while (!connected && (timelimit < 0 || secs < timelimit)) {
         /* iterate over our ports trying to find a connection */
         int i;
         for (i = 1; i <= ports; i++) {
@@ -758,21 +774,31 @@ int pmgr_connect_hostname(
                     close(s);
                 }
             }
+
+            /* sleep before we try another port */
+            usleep(sleep);
         }
 
-        /* sleep for some time before we try another port scan */
+        /* before we try another port scan, sleep or increase our timeouts */
         if (!connected) {
+            /* sleep for some time before we try another port scan */
             //usleep(mpirun_port_scan_connect_sleep);
 
-            /* maybe we connected ok, but we were too impatient waiting for a reply,
-             * extend the reply timeout for the next round of attempts */
-            //reply_timeout *= 2;
+            /* extent the time we wait for a connection, higher times decrease the amount of IP packets but increase
+             * the time it takes to scan the port range */
+            if (mpirun_port_scan_connect_timeout >= 0) {
+              if (timeout*2 < max_timeout) {
+                timeout *= 2;
+              } else {
+                timeout = max_timeout;
+              }
+            }
         }
 
         /* compute how many seconds we've spent trying to connect */
         pmgr_gettimeofday(&end);
         secs = pmgr_getsecs(&end, &start);
-        if (secs >= timelimit) {
+        if (timelimit >= 0 && secs >= timelimit) {
             pmgr_error("Time limit to connect to rank %d on %s expired @ file %s:%d",
                        rank, hostname, __FILE__, __LINE__
             );

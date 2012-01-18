@@ -104,6 +104,10 @@ int pmgr_mpirun_open(int ranks, int rank)
             exit(1);
         }
 
+        /* TODO: remove this hack, need it now so as not to overflow mpirun tcp listen queue */
+        /* stagger connect attempts back to mpirun process based on MPI rank */
+        usleep(mpirun_rank * 5);
+
         struct in_addr ip = *(struct in_addr *) *(mpirun_hostent->h_addr_list);
         mpirun_socket = pmgr_connect(ip, mpirun_port);
         if (mpirun_socket == -1) {
@@ -133,6 +137,10 @@ int pmgr_mpirun_open(int ranks, int rank)
 int pmgr_mpirun_close()
 {
     if (mpirun_socket != -1) {
+        /* TODO: remove this hack, need it now so as not to overflow mpirun tcp listen queue */
+        /* stagger connect attempts back to mpirun process based on MPI rank */
+        usleep(mpirun_rank * 5);
+
         /* send CLOSE op code, then close socket */
         pmgr_mpirun_write_int(PMGR_CLOSE);
         close(mpirun_socket);
