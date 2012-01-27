@@ -54,6 +54,35 @@ int pmgr_me = -3;
 
 int pmgr_echo_debug = 0;
 
+static char* pmgr_errstrs[] = {
+"0",
+"-1",
+"PMGR_ERR_POLL",
+"PMGR_ERR_POLL_TIMEOUT",
+"PMGR_ERR_POLL_HANGUP",
+"PMGR_ERR_POLL_EVENT",
+"PMGR_ERR_POLL_INVALID_REQ",
+"PMGR_ERR_POLL_NOREAD",
+"PMGR_ERR_POLL_BAD_READ",
+"PMGR_ERR_WRITE_RETURNED_ZERO",
+"UNKNOWN",
+};
+
+/* return pointer to error string for given error code */
+const char* pmgr_errstr(int rc)
+{
+  /* flip return code to be positive */
+  rc *= -1;
+
+  /* check that return code is within valid error range */
+  if (rc < 0 || rc >= PMGR_ERR_LAST) {
+    rc = PMGR_ERR_LAST;
+  }
+
+  /* return pointer to error string corresponding to this code */
+  return pmgr_errstrs[rc];
+}
+
 /* Return the number of secs as a double between two timeval structs (tv2-tv1) */
 double pmgr_getsecs(struct timeval* tv2, struct timeval* tv1)
 {
@@ -175,7 +204,9 @@ int pmgr_write_fd_suppress(int fd, const void* buf, int size, int suppress)
 	rc = write(fd, offset, size - n);
 
 	if (rc < 0) {
-	    if(errno == EINTR || errno == EAGAIN) { continue; }
+	    if(errno == EINTR || errno == EAGAIN) {
+              continue;
+            }
             pmgr_debug(suppress, "Writing to file descriptor (write(fd=%d,offset=%x,size=%d) %m errno=%d) @ file %s:%d",
                 fd, offset, size-n, errno, __FILE__, __LINE__
             );
@@ -184,7 +215,7 @@ int pmgr_write_fd_suppress(int fd, const void* buf, int size, int suppress)
             pmgr_debug(suppress, "Unexpected return code of 0 from write to file descriptor (write(fd=%d,offset=%x,size=%d)) @ file %s:%d",
                 fd, offset, size-n, __FILE__, __LINE__
             );
-	    return -1;
+	    return PMGR_ERR_WRITE_RETURNED_ZERO;
 	}
 
 	offset += rc;
@@ -197,7 +228,8 @@ int pmgr_write_fd_suppress(int fd, const void* buf, int size, int suppress)
 /* write size bytes from buf into fd, retry if necessary */
 int pmgr_write_fd(int fd, const void* buf, int size)
 {
-    return pmgr_write_fd_suppress(fd, buf, size, 0);
+    int rc = pmgr_write_fd_suppress(fd, buf, size, 0);
+    return rc;
 }
 
 /* read size bytes into buf from fd, retry if necessary */
@@ -216,13 +248,15 @@ int pmgr_read_fd_timeout(int fd, void* buf, int size, int msecs)
         /* poll the connection with a timeout value */
         int poll_rc = poll(&fds, 1, msecs);
         if (poll_rc < 0) {
-	    if(errno == EINTR || errno == EAGAIN) { continue; }
+	    if(errno == EINTR || errno == EAGAIN) {
+              continue;
+            }
             pmgr_error("Polling file descriptor for read (read(fd=%d,offset=%x,size=%d) %m errno=%d) @ file %s:%d",
                        fd, offset, size-n, errno, __FILE__, __LINE__
             );
-            return -1;
+            return PMGR_ERR_POLL;
         } else if (poll_rc == 0) {
-            return -1;
+            return PMGR_ERR_POLL_TIMEOUT;
         }
 
         /* check the revents field for errors */
@@ -230,35 +264,37 @@ int pmgr_read_fd_timeout(int fd, void* buf, int size, int msecs)
             pmgr_debug(1, "Hang up error on poll for read(fd=%d,offset=%x,size=%d) @ file %s:%d",
                        fd, offset, size-n, __FILE__, __LINE__
             );
-            return -1;
+            return PMGR_ERR_POLL_HANGUP;
         }
 
         if (fds.revents & POLLERR) {
             pmgr_debug(1, "Error on poll for read(fd=%d,offset=%x,size=%d) @ file %s:%d",
                        fd, offset, size-n, __FILE__, __LINE__
             );
-            return -1;
+            return PMGR_ERR_POLL_EVENT;
         }
 
         if (fds.revents & POLLNVAL) {
             pmgr_error("Invalid request on poll for read(fd=%d,offset=%x,size=%d) @ file %s:%d",
                        fd, offset, size-n, __FILE__, __LINE__
             );
-            return -1;
+            return PMGR_ERR_POLL_INVALID_REQ;
         }
 
         if (!(fds.revents & POLLIN)) {
             pmgr_error("No errors found, but POLLIN is not set for read(fd=%d,offset=%x,size=%d) @ file %s:%d",
                        fd, offset, size-n, __FILE__, __LINE__
             );
-            return -1;
+            return PMGR_ERR_POLL_NOREAD;
         }
 
         /* poll returned that fd is ready for reading */
 	rc = read(fd, offset, size - n);
 
 	if (rc < 0) {
-	    if(errno == EINTR || errno == EAGAIN) { continue; }
+	    if(errno == EINTR || errno == EAGAIN) {
+              continue;
+            }
             pmgr_error("Reading from file descriptor (read(fd=%d,offset=%x,size=%d) %m errno=%d) @ file %s:%d",
                        fd, offset, size-n, errno, __FILE__, __LINE__
             );
@@ -267,7 +303,7 @@ int pmgr_read_fd_timeout(int fd, void* buf, int size, int msecs)
             pmgr_debug(1, "Unexpected return code of 0 from read from file descriptor (read(fd=%d,offset=%x,size=%d) revents=%x) @ file %s:%d",
                        fd, offset, size-n, fds.revents, __FILE__, __LINE__
             );
-	    return -1;
+	    return PMGR_ERR_POLL_BAD_READ;
 	}
 
 	offset += rc;

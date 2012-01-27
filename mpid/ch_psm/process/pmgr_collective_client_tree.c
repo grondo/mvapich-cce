@@ -184,8 +184,8 @@ static int pmgr_write_collective(pmgr_tree_t* t, int fd, void* buf, int size)
     rc = pmgr_write_fd(fd, &header, sizeof(int));
     if (rc < sizeof(int)) {
         /* the write failed, close the socket, and return an error */
-        pmgr_error("Failed to write collective packet header rc=%d @ file %s:%d",
-            rc, __FILE__, __LINE__
+        pmgr_error("Failed to write collective packet header rc=%s @ file %s:%d",
+            pmgr_errstr(rc), __FILE__, __LINE__
         );
         return rc;
     }
@@ -194,8 +194,8 @@ static int pmgr_write_collective(pmgr_tree_t* t, int fd, void* buf, int size)
     rc = pmgr_write_fd(fd, buf, size);
     if (rc < size) {
         /* the write failed, close the socket, and return an error */
-        pmgr_error("Failed to write collective packet data rc=%d @ file %s:%d",
-            rc, __FILE__, __LINE__
+        pmgr_error("Failed to write collective packet data rc=%s @ file %s:%d",
+            pmgr_errstr(rc), __FILE__, __LINE__
         );
         return rc;
     }
@@ -223,8 +223,8 @@ static int pmgr_read_collective(pmgr_tree_t* t, int fd, void* buf, int size)
     rc = pmgr_read_fd(fd, &header, sizeof(int));
     if (rc <= 0) {
         /* failed to read packet header, print error, close socket, and return error */
-        pmgr_error("Failed to read packet header rc=%d @ file %s:%d",
-            rc, __FILE__, __LINE__
+        pmgr_error("Failed to read packet header rc=%s @ file %s:%d",
+            pmgr_errstr(rc), __FILE__, __LINE__
         );
         return rc;
     }
@@ -235,8 +235,8 @@ static int pmgr_read_collective(pmgr_tree_t* t, int fd, void* buf, int size)
         rc = pmgr_read_fd(fd, buf, size);
         if (rc <= 0) {
             /* failed to read data from socket, print error, close socket, and return error */
-            pmgr_error("Failed to read collective packet data rc=%d @ file %s:%d",
-                rc, __FILE__, __LINE__
+            pmgr_error("Failed to read collective packet data rc=%s @ file %s:%d",
+                pmgr_errstr(rc), __FILE__, __LINE__
             );
             return rc;
         }

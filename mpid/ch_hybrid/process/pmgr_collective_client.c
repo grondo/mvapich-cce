@@ -65,7 +65,7 @@
 
 /* total time to wait to get through pmgr_open */
 #ifndef MPIRUN_OPEN_TIMEOUT
-#define MPIRUN_OPEN_TIMEOUT (10*60) /* seconds, total time to wait to get through pmgr_open() */
+#define MPIRUN_OPEN_TIMEOUT (30*60) /* seconds, total time to wait to get through pmgr_open() */
 #endif
 
 /* set env variable to configure socket timeout parameters */
@@ -87,7 +87,7 @@
 #endif
 
 #ifndef MPIRUN_PORT_SCAN_TIMEOUT         /* total time we'll try to connect to a host before throwing a fatal error */
-#define MPIRUN_PORT_SCAN_TIMEOUT (10*60) /* seconds */
+#define MPIRUN_PORT_SCAN_TIMEOUT (30*60) /* seconds */
 #endif
 #ifndef MPIRUN_PORT_SCAN_CONNECT_TIMEOUT         /* time to wait before giving up on connect call */
 #define MPIRUN_PORT_SCAN_CONNECT_TIMEOUT (10000) /* millisecs */

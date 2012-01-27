@@ -55,6 +55,17 @@
 #define PMGR_ALLGATHER 7
 #define PMGR_ALLTOALL  8
 
+#define PMGR_ERR_FIRST               (1)  /* make sure this is one lower than magnitude of highest code */
+#define PMGR_ERR_POLL                (-2)
+#define PMGR_ERR_POLL_TIMEOUT        (-3)
+#define PMGR_ERR_POLL_HANGUP         (-4)
+#define PMGR_ERR_POLL_EVENT          (-5)
+#define PMGR_ERR_POLL_INVALID_REQ    (-6)
+#define PMGR_ERR_POLL_NOREAD         (-7)
+#define PMGR_ERR_POLL_BAD_READ       (-8)
+#define PMGR_ERR_WRITE_RETURNED_ZERO (-9)
+#define PMGR_ERR_LAST                (10) /* make sure this is one higher than magnitude of lowest code */
+
 /*
    my rank
    -3     ==> unitialized task (may be mpirun or MPI task)
@@ -65,6 +76,9 @@
 extern int pmgr_me;
 
 extern int pmgr_echo_debug;
+
+/* return pointer to error string for given error code */
+const char* pmgr_errstr(int rc);
 
 /* Return the number of secs as a double between two timeval structs (tv2-tv1) */
 double pmgr_getsecs(struct timeval* tv2, struct timeval* tv1);
