@@ -22,3 +22,5 @@ mpirun_rsh: pmgr_collective_common.o pmgr_collective_mpirun.o \
 
 update_lib: $(libmembers)
 	$(AR) $(LIBNAME) $(libmembers)
+
+vpath %.c $(srcdir)

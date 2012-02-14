@@ -1,5 +1,7 @@
 #!/bin/bash
 
+relpath=$(dirname $0)
+
 die ()
 {
     echo -n "Failure in "
@@ -33,7 +35,7 @@ set -o pipefail
 # Configure MVAPICH2
 echo "Start Configuring MVAPICH over TCP..."
 rm -f config-mine.log
-./configure  --prefix=$PREFIX --without-mpe  
+${relpath:-.}/configure  --prefix=$PREFIX --without-mpe  
 
 ret=$?
 tail config-mine.log
