@@ -484,8 +484,8 @@ EOF
 chmod +x $UNINSTALLFILE
 
 if [ -z "$libonly" ] ; then
-    CopyFile ${top_srcdir}/bin/tarch $bindir $XMODE
-    CopyFile ${top_srcdir}/bin/tdevice $bindir $XMODE
+    CopyFile ${binbuild_dir}/tarch $bindir $XMODE
+    CopyFile ${binbuild_dir}/tdevice $bindir $XMODE
     CopyFile util/mpichlib.conf ${sysconfdir} 
     if [ -x "bin/mpichversion.exe" ] ; then
         CopyFile bin/mpichversion.exe $bindir $XMODE
@@ -544,7 +544,7 @@ if [ -z "$libonly" ] ; then
 
     #echo "rm -f $bindir/mpirun" >> $UNINSTALLFILE
     if [ ! -x $bindir/tarch ] ; then
-        CopyFile $top_srcdir/bin/tarch $bindir $XMODE
+        CopyFile $binbuild_dir/tarch $bindir $XMODE
     fi
     #
     $Show rm -f $DESTDIR$bindir/mpireconfig
