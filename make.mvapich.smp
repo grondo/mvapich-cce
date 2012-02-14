@@ -2,11 +2,13 @@
 
 set -x
 
+relpath=$(dirname $0)
+
 # Most variables here can be overridden by exporting them in the environment
 # before running this script.  Default values have been provided if the
 # environment variable is not already set.
 
-source ./make.mvapich.def.smp
+source ${relpath:-.}/make.mvapich.def.smp
 
 # The target architecture.  If not exported outside of this script,
 # it will be found automatically or prompted for if necessary.
@@ -82,7 +84,7 @@ set -o pipefail
 
 echo "Configuring MVAPICH..."
 
-./configure --with-device=ch_smp --with-arch=LINUX -prefix=${PREFIX} \
+${relpath:-.}/configure --with-device=ch_smp --with-arch=LINUX -prefix=${PREFIX} \
 	$ROMIO --enable-sharedlib --enable-debug --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
 ret=$?
 test $ret = 0 ||  die "configuration."
