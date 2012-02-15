@@ -1,0 +1,200 @@
+#
+# $Id: Makefile 59 2006-08-17 22:29:30Z grondo $
+#
+
+#
+#  Variants of mvapich to build and compilers with which
+#   to build those variants.  #
+VARIANTS  ?= gen2 shmem psm
+COMPILERS ?= gnu gnu-debug
+
+LONG_PATH_HACK   ?= 0 # Set to 1 if you need a longer path for debugedit
+
+# Set NESTED_INSTALL to 0 if you want bin/ lib/ etc.. directly
+#  under MVAPICH_PREFIX
+NESTED_INSTALL   ?= 1
+
+MAKE             := /usr/bin/make
+TOP_SRC_DIR      := $(shell /bin/pwd)
+DESTDIR          ?= $(TOP_SRC_DIR)/BUILD/root
+ARCH_NAME        := $(shell uname -m | tr 'a-z' 'A-Z' | sed 's/.86$$/IA32/')
+ARCH_NAME        := -D_$(ARCH_NAME)_
+
+#########################
+# MVAPICH CONFIGURE FLAGS
+#########################
+HCA_COMPILE_FLAG ?= _MLX_PCI_EX_DDR_
+IBHOME           := /usr
+IBHOME_LIB       := /usr/lib64
+MVAPICH_PREFIX   ?= /usr/lib64/mvapich
+COMPAT           := AUTO_DETECT
+OPT_FLAG         ?= -g -O2
+# turn off optimization so that memory debuggers work
+# can turn this back on if performance drops significantly
+PTMALLOC         := no
+
+ifeq ($(LONG_PATH_HACK), 1)
+  BUILDDIR       := BUILD/build-mvapich-long-path-hack-enabled
+else
+  BUILDDIR       := BUILD/build
+endif
+
+ifeq ($(NESTED_INSTALL), 1)
+  PREFIXDIR      = $(MVAPICH_PREFIX)/$(CNAME)/$$variant
+else
+  PREFIXDIR      = $(MVAPICH_PREFIX)
+endif
+
+
+# would be simpler to do something like this, but this won't work as written
+#ifeq ($(findstring -debug, $(VARIANT)))
+#  OPT_FLAG     := -g -O0 
+#  PTMALLOC     := no
+#  DEBUG_SUFFIX := "-debug"
+#else
+#  OPT_FLAG := -g -O2
+#  PTMALLOC := yes
+#  DEBUG_SUFFIX := ""
+#endif
+
+# code above, along with these settings below
+#gn%: CNAME          := gnu$(DEBUG_SUFFIX)
+#gn%: OPT_FLAG       := $(OPT_FLAG)
+#gn%: FFLAGS         := $(OPT_FLAG) -fno-second-underscore
+#gn%: F90FLAGS       := $(OPT_FLAG) -fno-second-underscore
+
+#########################
+# MORE MVAPICH CONFIGURE FLAGS
+#########################
+gn%: CC             := gcc 
+gn%: CXX            := g++ 
+gn%: F77            := gfortran
+gn%: F90            := gfortran
+gn%: SED_ARG        := s|/gnu/|/gnu-debug/|
+gnu-debug: CNAME    := gnu-debug
+gnu-debug: OPT_FLAG := -g -O0
+gnu-debug: FFLAGS   := -g -O0 -fno-second-underscore
+gnu-debug: F90FLAGS := -g -O0 -fno-second-underscore
+gnu: CNAME          := gnu
+gnu: OPT_FLAG       := -g -O2
+gnu: FFLAGS         := -g -O2 -fno-second-underscore
+gnu: F90FLAGS       := -g -O2 -fno-second-underscore
+
+
+inte%: CC             := icc
+inte%: CXX            := icpc
+inte%: F77            := ifort
+inte%: F90            := ifort
+inte%: SED_ARG        := s|/intel/|/intel-debug/|
+intel-debug: CNAME    := intel-debug
+intel-debug: OPT_FLAG := -g -O0
+intel-debug: FFLAGS   := -g -O0
+intel-debug: F90FLAGS := -g -O0
+intel: CNAME          := intel
+intel: OPT_FLAG       := -g -O2
+intel: FFLAGS         := -g -O2
+intel: F90FLAGS       := -g -O2
+
+# the pgi compilers need to have the path to their install directory when building
+pg%: CC             := pgcc
+pg%: CXX            := pgCC
+pg%: F77            := pgf77
+pg%: F90            := pgf90
+pg%: SED_ARG        := s|/pgi/|/pgi-debug/|
+pgi-debug: CNAME    := pgi-debug
+pgi-debug: OPT_FLAG := -g -O0
+pgi-debug: FFLAGS   := -g -O0 -fPIC
+pgi-debug: F90FLAGS := -g -O0 -fPIC
+pgi: CNAME          := pgi
+pgi: OPT_FLAG       := -g -O2
+pgi: FFLAGS         := -g -O2 -fPIC
+pgi: F90FLAGS       := -g -O2 -fPIC
+
+# for some reason, we always turn off ptmalloc with pathscale?
+pathscal%: PTMALLOC       := no
+pathscal%: CC             := pathcc
+pathscal%: CXX            := pathCC
+pathscal%: F77            := pathf90
+pathscal%: F90            := pathf90
+pathscal%: SED_ARG        := s|/pathscale/|/pathscale-debug/|
+pathscale-debug: CNAME    := pathscale-debug
+pathscale-debug: OPT_FLAG := -g -O0
+pathscale-debug: FFLAGS   := -g -O0 -fno-second-underscore
+pathscale-debug: F90FLAGS := -g -O0 -fno-second-underscore
+pathscale: CNAME          := pathscale
+pathscale: OPT_FLAG       := -g -O2
+pathscale: FFLAGS         := -g -O0 -fno-second-underscore
+pathscale: F90FLAGS       := -g -O0 -fno-second-underscore
+
+# export all variables to subshells
+export
+
+# Don't export any -j flags to subsequent make invocations. This
+#  doesn't work for some unknown reason.
+unexport MAKEFLAGS
+
+TARGETS   := $(foreach V, $(VARIANTS), $(foreach C, $(COMPILERS), $(V)-$(C)))
+
+all: $(COMPILERS)
+
+$(COMPILERS): %: $(addsuffix -%, $(VARIANTS))
+
+$(TARGETS) :
+	@variant=`echo $@ | sed 's/-.*//'`; \
+	 if test "$(VERSION)" && test "$(INCLUDE_VARIANT_IN_PREFIX)"; then \
+	   export target=$@ PREFIX=$(PREFIXDIR)-$(CNAME)-$${variant}-$(VERSION); \
+	 else \
+	   export PREFIX=$(PREFIXDIR); \
+	 fi; \
+	 export F77_GETARGDECL=" "; \
+	 echo PREFIX=$$PREFIX CNAME=$(CNAME) variant=$$variant VERSION=$(VERSION); \
+	 echo Building mvapich target $@ variant $$variant; \
+	 echo Creating ./$(BUILDDIR)-$@; mkdir -p $(BUILDDIR)-$@ && \
+	 echo Building mvapich-$@; \
+	 \
+	 ( cd $(BUILDDIR)-$@ && \
+	   suffix=`echo $$variant | sed 's/shmem/smp/'` && \
+	   echo Running $(TOP_SRC_DIR)/make.mvapich.$$suffix && sleep 10 && \
+	   $(TOP_SRC_DIR)/make.mvapich.$$suffix || exit 1 \
+	 ) && \
+	 \
+	 grep -rlI $(TOP_SRC_DIR)/$(BUILDDIR)-$@ \
+           $(DESTDIR)$${PREFIX} | xargs -ti perl -pi -e \
+	   's,$(TOP_SRC_DIR)/$(BUILDDIR)-$@,$${PREFIX},g' {}; \
+	 grep -rlI $(DESTDIR) $(DESTDIR)$$PREFIX | \
+	   xargs -ti perl -pi -e 's,$(DESTDIR)/,,g' {}; \
+	 \
+	 for lib in mpich fmpich pmpich pmpich++ mpichf90 mpichf90nc; do \
+	   echo "Ensuring lib$${lib}.a was installed.."; \
+	   if ! test -f $(DESTDIR)$${PREFIX}/lib/lib$${lib}.a; then \
+	     echo "Failed to find $(DESTDIR)$${PREFIX}/lib/lib$${lib}.a"; \
+	     exit 1; \
+	   fi; \
+	 done; \
+	 for lib in mpich fmpich pmpich pmpich++; do \
+	   echo "Ensuring lib$${lib}.so was installed.."; \
+	   if ! test -f $(DESTDIR)$${PREFIX}/lib/shared/lib$${lib}.so; then \
+	     echo "Failed to find $(DESTDIR)$${PREFIX}/lib/shared/lib$${lib}.so"; \
+	     exit 1; \
+	   fi; \
+	 done; \
+	 $(TOP_SRC_DIR)/chaos/fixup-debuginfo.sh \
+	   --srcdir=`pwd`/$(BUILDDIR)-$@ \
+	   --destdir=$(DESTDIR) \
+	   --path=`echo $${PREFIX} | sed '$(SED_ARG)'` \
+	   $(shell echo $@ | grep -q debug || echo --no-check) || :; \
+	 echo "Done building and installing mvapich-$(CNAME)-$${variant}-$(VERSION)"
+
+#test: 
+#	mkdir -p build-dbg && (cd build-dbg; lndir -silent  ../mvapich)
+#	(cd $(TOP_SRC_DIR)/build-dbg && make mpi-modules && make mpichsharelibs)
+
+clean:
+	for d in BUILD/*; do \
+	   echo "Cleaning directory $$d" ; \
+	   $(MAKE) -C $$d clean || :; done;
+	rm -rf $(DESTDIR)
+
+distclean: 
+	rm -rf BUILD
+	rm -rf $(DESTDIR)
