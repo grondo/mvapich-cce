@@ -1,0 +1,32 @@
+Version 1.2-RC1.18chaos
+- Repackage mvapich-1.2-RC1-3cce
+
+Version 1.2-RC1.17chaos
+- Install compiler links in bin directory (e.g. mpigcc -> mpicc, etc.)
+
+Version 1.2-RC1.16chaos
+- Fix bug causing segfault in optimized shmem broadcast
+- Allow build of mvapich RPM without lustre
+- Fix RPM BuildRequires to include slurm-devel for PMI support
+
+Version 1.2-RC1.15chaos
+- patch to ch_psm to enable shared context when oversubscribing nodes.
+
+Version 1.2-RC1.10chaos
+- Extended SLEEP_ON_ABORT to ch_smp, ch_psm, and ch_hybrid.
+- Fixed a few memory leaks.
+
+Version 1.2-RC1.9chaos
+- Provide infinipath psm version of mvapich-1.2.
+- Add "Provides: mvapich-%{compiler}" to mvapich subpackages.
+
+Version 1.2-RC1.8chaos
+- Enable user to specify a number of seconds to sleep after an MPI abort.
+
+Version 1.2-RC1.7chaos
+- Add version (1.2) to name of RPMs so that multiple versions of
+  mvapich may be installed at the same time.
+
+Version 1.2-RC1.6chaos
+- Initial release of mvapich-1.2 for /opt
+
