@@ -799,8 +799,8 @@ int pmgr_connect_hostname(
         pmgr_gettimeofday(&end);
         secs = pmgr_getsecs(&end, &start);
         if (timelimit >= 0 && secs >= timelimit) {
-            pmgr_error("Time limit to connect to rank %d on %s expired @ file %s:%d",
-                       rank, hostname, __FILE__, __LINE__
+            pmgr_error("Time limit to connect to rank %d on %s expired (%f secs) @ file %s:%d",
+                       rank, hostname, timelimit, __FILE__, __LINE__
             );
         }
     }

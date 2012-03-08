@@ -68,7 +68,7 @@ static int pmgr_slurm_wait_check_in(const char* file, int max_local, int precise
     return PMGR_SUCCESS;
 }
 
-/* append our rank, ip, and port to file */
+/* write our rank (a single integer value) to the end of the file */
 static int pmgr_slurm_check_in(const char* file, int local, int rank, int* rank_checked_in)
 {
     int rc = PMGR_SUCCESS;
@@ -242,7 +242,7 @@ static void pmgr_slurm_barrier_signal(volatile void* buf, int ranks, int rank)
 
 /* all ranks wait for rank 0 to set their wait field to 1,
  * each rank then sets its wait field back to 0 for next barrier call */
-static int pmgr_slurm_barrier_wait(volatile void* buf, int ranks, int rank, double timelimit)
+static int pmgr_slurm_barrier_wait(volatile void* buf, int ranks, int rank)
 {
     int rc = PMGR_SUCCESS;
 
@@ -254,20 +254,8 @@ static int pmgr_slurm_barrier_wait(volatile void* buf, int ranks, int rank, doub
             mem[i] = 1;
         }
     } else {
-        /* wait until leader flips our flag to 1 (or 3sec timelimit expires) */
-        struct timeval start, end;
-        pmgr_gettimeofday(&start); 
+        /* wait until leader flips our flag to 1 (or timelimit expires) */
         while (mem[rank] == 0) {
-            /* check whether we've exceeded our time limit */
-            if (timelimit > 0.0) {
-                pmgr_gettimeofday(&end);
-                double waited = pmgr_getsecs(&end, &start);
-                if (waited > timelimit) {
-                    rc = PMGR_FAILURE;
-                    break;
-                }
-            }
-
             /* make room for another process to run in case we're oversubscribed */
             sched_yield();
 
@@ -284,10 +272,10 @@ static int pmgr_slurm_barrier_wait(volatile void* buf, int ranks, int rank, doub
 
 /* execute a shared memory barrier, note this is a two phase process
  * to prevent procs from escaping ahead */
-static int pmgr_slurm_barrier(void* buf, int max_ranks, int ranks, int rank, double timelimit)
+static int pmgr_slurm_barrier(void* buf, int max_ranks, int ranks, int rank)
 {
     pmgr_slurm_barrier_signal(buf, ranks, rank);
-    int rc = pmgr_slurm_barrier_wait(buf + max_ranks * sizeof(int), ranks, rank, timelimit);
+    int rc = pmgr_slurm_barrier_wait(buf + max_ranks * sizeof(int), ranks, rank);
     return rc;
 }
 
@@ -528,7 +516,11 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
     size_t addr_size  = sizeof(struct in_addr) + sizeof(short); /* IP,port */
     size_t entry_size = sizeof(int) + addr_size;                /* rank,IP,port */
 
-    /* compute the size of the shared memory segment */
+    /* compute the size of the shared memory segment, which will contain:
+     *   buffer space to implement a shared memory barrier - 2 ints for each proc on node
+     *   a table holding (rank,IP,port) info for each task on the node
+     *   an integer to record the total number of ranks found in the job
+     *   a table holding (IP,port) info for each task in the job, ordered by rank */
     void* segment = NULL;
     size_t barrier_offset = 0;
     size_t node_offset    = barrier_offset + max_local * 2 * sizeof(int);
@@ -594,7 +586,7 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
     int sockfd = -1;
     int have_table = 0;
     int ranks_checked_in = 0;
-    while (!have_table) {
+    while (! have_table) {
         /* check whether we've exceeded the time to try to connect everything */
         if (pmgr_have_exceeded_open_timeout()) {
             if (rank == 0) {
@@ -615,16 +607,14 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
 
         /* at this point, we can use shared memory barriers to sync processes that have checked in */
 
-        /* if a process checked in late, it will get stuck and eventually fail this first barrier,
-         * just have it circle back around until it either succeeds or times out, all other procs
-         * will detect that it's missing when they get the total number of entries in the table */
+        /* if a process checked in late, it will get stuck on the barrier below until the proc
+         * with rank_checked_in == 0 eventually circles back to re-read the checkin file above,
+         * only ranks which are known to be checked in will pass through */
 
         /* issue a barrier to signal that procs can open their listening sockets,
          * we delay this open to avoid procs accepting connections from leaders during port scans
          * when opening the leader tree */
-        if (pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in, 3.0) != PMGR_SUCCESS) {
-            continue;
-        }
+        pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in);
 
         /* TODO: want to create a new listening socket each loop? */
 
@@ -649,7 +639,7 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
         }
 
         /* signal to leader that all procs have written their IP:port info to shared memory */
-        pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in, -1.0);
+        pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in);
 
         /* exchange data with other leaders and record all entries in table */
         if (rank_checked_in == 0) {
@@ -692,7 +682,7 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
         }
 
         /* signal to local procs to indicate that leader exchange is complete */
-        pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in, -1.0);
+        pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in);
 
         /* check that number of entries matches number of ranks */
         int table_ranks = *(int*) (segment + count_offset);
@@ -745,7 +735,7 @@ int pmgr_tree_open_slurm(pmgr_tree_t* t, int ranks, int rank, const char* auth)
     }
 
     /* issue barrier to signal that shared memory files can be deleted */
-    pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in, -1.0);
+    pmgr_slurm_barrier(segment + barrier_offset, max_local, ranks_checked_in, rank_checked_in);
 
     /* unmap shared memory segment */
     munmap(segment, (size_t) segment_size);
