@@ -112,13 +112,11 @@ lib: $(VIAOBJECTS) $(MPICHOBJECTS)
 
 .EXPORT_ALL_VARIABLES:
 
-process: $(srcdir)/process/makefile
-	mkdir -p process && cp $(srcdir)/process/makefile process/makefile
-
-.PHONY: process
-
 mpirun_rsh: process
-	cd process && srcdir=$(srcdir)/process $(MAKE) && \
+	mkdir -p process && \
+	  cd process && \
+	  (test -f makefile || cp $(srcdir)/process/makefile .) && \
+	  srcdir=$(srcdir)/process $(MAKE) && \
 	  install -m 755 mpirun_rsh mpispawn minidaemon_client $(binbuild_dir)
 
 mpirun_mpd: process
