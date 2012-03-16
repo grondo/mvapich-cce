@@ -14,6 +14,7 @@ top_srcdir  = @top_srcdir@
 # srcdir is mpid/device
 srcdir      = @srcdir@
 libbuild_dir = @libbuild_dir@
+binbuild_dir = @binbuild_dir@
 DEFS        = @DEFS@ -I. -I${srcdir} @mpich_includes@ \
 		-DMPID_DEVICE_CODE @GETNAME_DEFS@ @DEVCFLAGS@ @DEV_DEFS@
 
@@ -124,13 +125,16 @@ lib: $(VIAOBJECTS) $(MPICHOBJECTS)
 .EXPORT_ALL_VARIABLES:
 
 mpirun_rsh:
-	cd process && $(MAKE) &&\
-	  install -m 755 mpirun_rsh mpispawn minidaemon_client ${top_srcdir}/bin
+	mkdir -p process &&\
+	  cd process && \
+	  (test -f makefile || cp $(srcdir)/process/makefile .) &&\
+	  srcdir=$(srcdir)/process $(MAKE) &&\
+	  install -m 755 mpirun_rsh mpispawn minidaemon_client $(binbuild_dir)
 
 ibmcgrp: ibmcgrp/ibmcgrp.o ibmcgrp/main.o
-	$(CC) $(CFLAGS) -c -o ibmcgrp/main.o ibmcgrp/main.c
-	$(CC) $(CFLAGS) -c -o ibmcgrp/ibmcgrp.o ibmcgrp/ibmcgrp.c
-	$(CC) -o ibmcgrp/ibmcgrp ibmcgrp/main.o ibmcgrp/ibmcgrp.o $(BASE_LIB_LIST) $(LDFLAGSBASE)
+	$(CC) $(CFLAGS) -c -o ibmcgrp/main.o $(srcdir)/ibmcgrp/main.c
+	$(CC) $(CFLAGS) -c -o ibmcgrp/ibmcgrp.o $(srcdir)/ibmcgrp/ibmcgrp.c
+	$(CC) -o ibmcgrp/ibmcgrp ibmcgrp/main.o $(srcdir)/ibmcgrp/ibmcgrp.o $(BASE_LIB_LIST) $(LDFLAGSBASE)
 	install -m 755 ibmcgrp/ibmcgrp ${top_srcdir}/bin
 
 ptmalloc2: malloc.o
@@ -138,8 +142,8 @@ ptmalloc2: malloc.o
 
 malloc.o:
 	${CC} -fPIC -c @CFLAGS@ -D_GNU_SOURCE=1 -O2 -DUSE_TSD_DATA_HACK \
-	-Iptmalloc2/sysdeps/pthread -Iptmalloc2/sysdeps/generic -I. \
-	-DTHREAD_STATS=1  ptmalloc2/malloc.c
+	-I$(srcdir)/ptmalloc2/sysdeps/pthread -I$(srcdir)/ptmalloc2/sysdeps/generic -I$(srcdir) \
+	-DTHREAD_STATS=1  $(srcdir)/ptmalloc2/malloc.c
 
 	
 
@@ -189,7 +193,7 @@ clean:
 	if [ -f Makefile ] ; then $(MAKE) clean ; fi)
 
 viainit.o: viainit.c
-	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c viainit.c ${MPI_PROFILE}
+	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c $(srcdir)/viainit.c ${MPI_PROFILE}
 
 .c.o: $(HEADERS)
 	${CC} ${DEFS} ${CFLAGS} ${BASEOPT} -c $< ${MPI_PROFILE}
@@ -202,7 +206,7 @@ $(LIBNAME): $(OBJECTS) $(VIAOBJECTS)
 setlinks: 
 	for file in $(MPICHSOURCE) ; do  \
 	    if [ ! -s $$file ] ; then   \
-	       ln -s ../util/$$file;    \
+	       ln -s $(srcdir)/../util/$$file;    \
 	    fi;                         \
 	done
 

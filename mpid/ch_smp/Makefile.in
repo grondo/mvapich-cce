@@ -14,6 +14,7 @@ top_srcdir  = @top_srcdir@
 # srcdir is mpid/device
 srcdir      = @srcdir@
 libbuild_dir = @libbuild_dir@
+binbuild_dir = @binbuild_dir@
 DEFS        = @DEFS@ -I. -I${srcdir} @mpich_includes@ \
 		-DMPID_DEVICE_CODE @GETNAME_DEFS@ @DEVCFLAGS@ @DEV_DEFS@
 
@@ -113,16 +114,21 @@ lib: $(VIAOBJECTS) $(MPICHOBJECTS)
 .EXPORT_ALL_VARIABLES:
 
 mpirun_rsh:
-	cd process && $(MAKE) &&\
-                install -m 755 mpirun_rsh mpispawn minidaemon_client ${top_srcdir}/bin
+	mkdir -p process && \
+	  cd process && \
+	  (test -f makefile || cp $(srcdir)/process/makefile .) && \
+	  srcdir=$(srcdir)/process $(MAKE) && \
+	  install -m 755 mpirun_rsh mpispawn minidaemon_client $(binbuild_dir)
+
+
 
 ptmalloc2: malloc.o
 	$(AR) $(LIBNAME) malloc.o
 
 malloc.o:
 	${CC} -fPIC -c -D_GNU_SOURCE=1 -O2 -Wall -Wstrict-prototypes -DUSE_TSD_DATA_HACK \
-	-Iptmalloc2/sysdeps/pthread -Iptmalloc2/sysdeps/generic -I. \
-	-DTHREAD_STATS=1  ptmalloc2/malloc.c
+	-I$(srcdir)/ptmalloc2/sysdeps/pthread -I$(srcdir)/ptmalloc2/sysdeps/generic -I. \
+	-DTHREAD_STATS=1  $(srcdir)/ptmalloc2/malloc.c
 
 	
 
@@ -163,12 +169,12 @@ clean:
 	/bin/rm -f *.o *.d *~ process/*~ process/*.d process/*.o  \
 	    process/mpirun_rsh process/core $(VIAOBJECTS) $(MPICHOBJECTS) \
 	    $(MPICHSOURCE) core 
-	-@(cd ../mpd; \
+	-@test -d ../mpd && (cd ../mpd; \
 	if [ $(MPIRUN) != mpirun_mpd ] ; then rm -rf ch_smp.mpd ; fi ; \
-	if [ -f Makefile ] ; then $(MAKE) clean ; fi)
+	if [ -f Makefile ] ; then $(MAKE) clean ; fi) || :
 
 viainit.o: viainit.c
-	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c viainit.c ${MPI_PROFILE}
+	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c $(srcdir)/viainit.c ${MPI_PROFILE}
 
 .c.o: $(HEADERS)
 	${CC} ${DEFS} ${CFLAGS} ${BASEOPT} -c $< ${MPI_PROFILE}
@@ -181,7 +187,7 @@ $(LIBNAME): $(OBJECTS) $(VIAOBJECTS)
 setlinks: 
 	for file in $(MPICHSOURCE) ; do  \
 	    if [ ! -s $$file ] ; then   \
-	       ln -s ../util/$$file;    \
+	       ln -s $(srcdir)/../util/$$file;    \
 	    fi;                         \
 	done
 

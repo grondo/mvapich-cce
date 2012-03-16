@@ -14,6 +14,7 @@ top_srcdir  = @top_srcdir@
 # srcdir is mpid/device
 srcdir      = @srcdir@
 libbuild_dir = @libbuild_dir@
+binbuild_dir = @binbuild_dir@
 DEFS        = @DEFS@ -I. -I${srcdir} @mpich_includes@ \
 		-DMPID_DEVICE_CODE @GETNAME_DEFS@ @DEVCFLAGS@ @DEV_DEFS@
 
@@ -111,14 +112,19 @@ lib: $(VIAOBJECTS) $(MPICHOBJECTS)
 
 .EXPORT_ALL_VARIABLES:
 
-mpirun_rsh: 
-	cd process && $(MAKE) &&\
-	  install -m 755 mpirun_rsh mpispawn minidaemon_client ${top_srcdir}/bin
+process: $(srcdir)/process/makefile
+	mkdir -p process && cp $(srcdir)/process/makefile process/makefile
 
-mpirun_mpd: 
+.PHONY: process
+
+mpirun_rsh: process
+	cd process && srcdir=$(srcdir)/process $(MAKE) && \
+	  install -m 755 mpirun_rsh mpispawn minidaemon_client $(binbuild_dir)
+
+mpirun_mpd: process
 	cd process && $(MAKE) &&\
-	  install -m 755 mpirun_rsh mpispawn minidaemon_client ${top_srcdir}/bin \
-	  $(CC) $(MPIRUN_CFLAGS) -c pmgr_client_mpd.c &&\
+	  install -m 755 mpirun_rsh mpispawn minidaemon_client ${binbuild_dir}; \
+	  $(CC) $(MPIRUN_CFLAGS) -c $(srcdir)/process/pmgr_client_mpd.c &&\
 	  $(AR) $(LIBNAME) pmgr_client_mpd.o 
 	-(cd $(top_srcdir)/mpid/ch_gen2/process && ar -d $(LIBNAME) pmgr_client_mpirun_rsh.o)
 	cd $(top_srcdir)/mpid/mpd && make &&\
@@ -165,12 +171,12 @@ clean:
 	/bin/rm -f *.o *.d *~ process/*~ process/*.d process/*.o  \
 	    process/mpirun_rsh process/mpispawn process/core process/minidaemon_client $(VIAOBJECTS) $(MPICHOBJECTS) \
 	    $(MPICHSOURCE) core 
-	-@(cd ../mpd; \
+	-@test -d ../mpd && (cd ../mpd; \
 	if [ $(MPIRUN) != mpirun_mpd ] ; then rm -rf ch_psm.mpd ; fi ; \
-	if [ -f Makefile ] ; then $(MAKE) clean ; fi)
+	if [ -f Makefile ] ; then $(MAKE) clean ; fi) || :
 
 psminit.o: psminit.c
-	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c psminit.c ${MPI_PROFILE}
+	${CC} ${DEFS} ${CFLAGS1} ${BASEOPT} -c $(srcdir)/psminit.c ${MPI_PROFILE}
 
 .c.o: $(HEADERS)
 	${CC} ${DEFS} ${CFLAGS} ${BASEOPT} -c $< ${MPI_PROFILE}
@@ -183,7 +189,7 @@ $(LIBNAME): $(OBJECTS) $(VIAOBJECTS)
 setlinks: 
 	for file in $(MPICHSOURCE) ; do  \
 	    if [ ! -s $$file ] ; then   \
-	       ln -s ../util/$$file;    \
+	       ln -s $(srcdir)/../util/$$file;    \
 	    fi;                         \
 	done
 

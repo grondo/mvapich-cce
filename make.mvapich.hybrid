@@ -2,11 +2,13 @@
 
 set -x
 
+relpath=$(dirname $0)
+
 # Most variables here can be overridden by exporting them in the environment
 # before running this script.  Default values have been provided if the
 # environment variable is not already set.
 
-source ./make.mvapich.def
+source ${relpath:-.}/make.mvapich.def
 
 # The target HCA.  If not exported outside of this script, it will
 # be prompted for.
@@ -98,7 +100,7 @@ make distclean &>/dev/null
 # Configure MVAPICH
 
 echo "Configuring MVAPICH..."
-./configure --with-device=ch_hybrid --with-arch=LINUX -prefix=${PREFIX} \
+${relpath:-.}/configure --with-device=ch_hybrid --with-arch=LINUX -prefix=${PREFIX} \
 	$ROMIO --enable-sharedlib --enable-debug --without-mpe -lib="$LIBS" 2>&1 |tee config-mine.log
 
 ret=$?
