@@ -297,10 +297,17 @@ int MPID_PSM_Init(int *argc, char ***argv, int *size, int *rank)
           } 
       }
 
+      /* need to set following env vars for PSM initialization and
+       * we override any existing settings for MPI_LOCALNRANKS/RANKID
+       * so that one MPI job can be launched from another MPI job,
+       * in which case the second job inherits its environment from
+       * the first, so these values will be wrong, this use case came
+       * up when a small MPI job was driving a regression suite of MPI
+       * tests */
       snprintf(temp_str, sizeof(temp_str),"%d", num_local_nodes);
-      setenv("MPI_LOCALNRANKS", temp_str, 0);
+      setenv("MPI_LOCALNRANKS", temp_str, 1);
       snprintf(temp_str1, sizeof(temp_str1), "%d", my_local_id);
-      setenv("MPI_LOCALRANKID", temp_str1, 0);
+      setenv("MPI_LOCALRANKID", temp_str1, 1);
     }
 
     free(allhostids);
