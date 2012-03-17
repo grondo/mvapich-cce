@@ -1,3 +1,8 @@
+Version 1.2-RC1.19chaos
+- Rebase on mvapich-1.2RC1-5cce
+- Fix CHAOS BZ#1493: MPI application hangs when launched from MPI.
+- Remove timeout in shared memory barrier
+
 Version 1.2-RC1.18chaos
 - Repackage mvapich-1.2-RC1-3cce
 

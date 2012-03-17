@@ -1,5 +1,5 @@
  Name:         mvapich-1.2-gnu
  Version:      1.2
- Release:      RC1.18chaos
+ Release:      RC1.19chaos
  Author:       The Ohio State University <mvapich-discuss@cse.ohio-state.edu>
  Pre_Exec:     find . -type f -name mpich*.spec -exec rm {} \;
